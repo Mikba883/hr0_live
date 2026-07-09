@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MetodoRouteImport } from './routes/metodo'
+import { Route as HrEsternoRouteImport } from './routes/hr-esterno'
 import { Route as CostoRouteImport } from './routes/costo'
 import { Route as CookieRouteImport } from './routes/cookie'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const MetodoRoute = MetodoRouteImport.update({
   id: '/metodo',
   path: '/metodo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HrEsternoRoute = HrEsternoRouteImport.update({
+  id: '/hr-esterno',
+  path: '/hr-esterno',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CostoRoute = CostoRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
 }
@@ -60,21 +68,30 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cookie' | '/costo' | '/metodo' | '/privacy'
+  fullPaths: '/' | '/cookie' | '/costo' | '/hr-esterno' | '/metodo' | '/privacy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cookie' | '/costo' | '/metodo' | '/privacy'
-  id: '__root__' | '/' | '/cookie' | '/costo' | '/metodo' | '/privacy'
+  to: '/' | '/cookie' | '/costo' | '/hr-esterno' | '/metodo' | '/privacy'
+  id:
+    | '__root__'
+    | '/'
+    | '/cookie'
+    | '/costo'
+    | '/hr-esterno'
+    | '/metodo'
+    | '/privacy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CookieRoute: typeof CookieRoute
   CostoRoute: typeof CostoRoute
+  HrEsternoRoute: typeof HrEsternoRoute
   MetodoRoute: typeof MetodoRoute
   PrivacyRoute: typeof PrivacyRoute
 }
@@ -93,6 +110,13 @@ declare module '@tanstack/react-router' {
       path: '/metodo'
       fullPath: '/metodo'
       preLoaderRoute: typeof MetodoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hr-esterno': {
+      id: '/hr-esterno'
+      path: '/hr-esterno'
+      fullPath: '/hr-esterno'
+      preLoaderRoute: typeof HrEsternoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/costo': {
@@ -123,6 +147,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CookieRoute: CookieRoute,
   CostoRoute: CostoRoute,
+  HrEsternoRoute: HrEsternoRoute,
   MetodoRoute: MetodoRoute,
   PrivacyRoute: PrivacyRoute,
 }
