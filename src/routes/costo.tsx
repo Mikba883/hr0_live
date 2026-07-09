@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CostCalculator } from "@/components/landing/CostCalculator";
 import { CtaButton } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { LeadForm } from "@/components/landing/LeadForm";
-import { Section, H2 } from "@/components/landing/Section";
+import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 
 export const Route = createFileRoute("/costo")({
@@ -50,28 +51,28 @@ const faq = [
 function CostoPage() {
   return (
     <main className="bg-surface pb-24 md:pb-0">
+      <AnnouncementBar tag="NUOVO">
+        Solo 4 check-up gratuiti a settimana ·{" "}
+        <a href="#form" className="text-brand underline underline-offset-2">Prenota il tuo posto</a>
+      </AnnouncementBar>
+
       {/* Hero */}
-      <section id="hero" className="px-5 pt-14 pb-16 sm:pt-24 sm:pb-24">
-        <div className="mx-auto max-w-4xl">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-brand">
-            Per titolari e amministratori di PMI
-          </p>
-          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
-            Ogni assunzione sbagliata ti costa fino a{" "}
-            <span className="text-danger">18.000€</span>. Quante ne hai fatte
-            negli ultimi 2 anni?
+      <section id="hero" className="px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+        <div className="mx-auto max-w-5xl text-center">
+          <Eyebrow>Per titolari e amministratori di PMI</Eyebrow>
+          <h1 className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl text-ink">
+            Un'assunzione sbagliata ti costa fino a{" "}
+            <span className="text-danger">18.000€</span>.
           </h1>
-          <p className="mt-6 text-lg text-ink-soft sm:text-xl">
-            Tra ruoli scoperti per mesi, persone che se ne vanno dopo poco e il tuo
-            tempo perso tra CV e colloqui, la tua azienda sta pagando un costo che
-            non compare in nessun bilancio. In 30 minuti lo calcoliamo insieme —
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
+            Ruoli scoperti, persone che se ne vanno, il tuo tempo bruciato tra CV
+            e colloqui. In 30 minuti calcoliamo insieme il tuo costo nascosto —
             gratis.
           </p>
-          <div className="mt-8">
-            <CtaButton href="#calcolatore">Calcola il tuo costo nascosto →</CtaButton>
-            <p className="mt-3 text-sm text-ink-soft">
-              Check-up gratuito di 30 minuti · Nessun impegno · Esci con i tuoi
-              numeri, che lavoriamo insieme o no
+          <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
+            <CtaButton href="#calcolatore">Calcola il tuo costo →</CtaButton>
+            <p className="text-xs uppercase tracking-widest text-ink-soft">
+              30 min · Nessun impegno · Numeri tuoi da tenere
             </p>
           </div>
         </div>

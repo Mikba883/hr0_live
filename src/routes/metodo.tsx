@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, X, Lightbulb } from "lucide-react";
+import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CtaButton } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { LeadForm } from "@/components/landing/LeadForm";
 import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
-import { Section, H2 } from "@/components/landing/Section";
+import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 
 export const Route = createFileRoute("/metodo")({
@@ -58,27 +59,28 @@ const faq = [
 function MetodoPage() {
   return (
     <main className="bg-surface pb-24 md:pb-0">
+      <AnnouncementBar tag="NUOVO">
+        Costruisci il metodo di assunzione dentro la tua azienda ·{" "}
+        <a href="#form" className="text-brand underline underline-offset-2">Check-up gratis</a>
+      </AnnouncementBar>
+
       {/* Hero */}
-      <section id="hero" className="px-5 pt-14 pb-16 sm:pt-24 sm:pb-24">
-        <div className="mx-auto max-w-4xl">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-brand">
-            Per PMI che vogliono smettere di dipendere dalle agenzie
-          </p>
-          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
-            Assumere bene non è un talento. È un processo. E puoi impararlo —
-            dentro la tua azienda.
+      <section id="hero" className="px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+        <div className="mx-auto max-w-5xl text-center">
+          <Eyebrow>Per PMI che vogliono smettere di dipendere dalle agenzie</Eyebrow>
+          <h1 className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl text-ink">
+            Assumere bene non è un talento.{" "}
+            <span className="text-brand">È un processo.</span>
           </h1>
-          <p className="mt-6 text-lg text-ink-soft sm:text-xl">
-            Le agenzie ti chiedono il 20-25% della RAL a ogni ricerca, per
-            sempre. C'è un'alternativa: costruire il metodo dentro la tua
-            azienda, sulla prima posizione vera che devi coprire. Nel check-up
-            gratuito ti mostro come.
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
+            Le agenzie ti chiedono il 20-25% della RAL a ogni ricerca, per sempre.
+            C'è un'alternativa: costruire il metodo dentro la tua azienda, sulla
+            prima posizione vera che devi coprire.
           </p>
-          <div className="mt-8">
-            <CtaButton href="#form">Scopri il metodo — check-up gratuito →</CtaButton>
-            <p className="mt-3 text-sm text-ink-soft">
-              30 minuti · Nessun impegno · Ti dico onestamente se fa per te
-              oppure no
+          <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
+            <CtaButton href="#form">Scopri il metodo →</CtaButton>
+            <p className="text-xs uppercase tracking-widest text-ink-soft">
+              30 min · Nessun impegno · Ti dico se fa per te
             </p>
           </div>
         </div>
