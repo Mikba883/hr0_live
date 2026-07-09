@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MetodoRouteImport } from './routes/metodo'
 import { Route as CostoRouteImport } from './routes/costo'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MetodoRoute = MetodoRouteImport.update({
+  id: '/metodo',
+  path: '/metodo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CostoRoute = CostoRouteImport.update({
   id: '/costo',
   path: '/costo',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/costo': typeof CostoRoute
+  '/metodo': typeof MetodoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/costo': typeof CostoRoute
+  '/metodo': typeof MetodoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/costo': typeof CostoRoute
+  '/metodo': typeof MetodoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/costo'
+  fullPaths: '/' | '/costo' | '/metodo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/costo'
-  id: '__root__' | '/' | '/costo'
+  to: '/' | '/costo' | '/metodo'
+  id: '__root__' | '/' | '/costo' | '/metodo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CostoRoute: typeof CostoRoute
+  MetodoRoute: typeof MetodoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/metodo': {
+      id: '/metodo'
+      path: '/metodo'
+      fullPath: '/metodo'
+      preLoaderRoute: typeof MetodoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/costo': {
       id: '/costo'
       path: '/costo'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CostoRoute: CostoRoute,
+  MetodoRoute: MetodoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
