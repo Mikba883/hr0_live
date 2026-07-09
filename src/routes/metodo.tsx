@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, X, Lightbulb } from "lucide-react";
+import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CtaButton } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { LeadForm } from "@/components/landing/LeadForm";
 import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
-import { Section, H2 } from "@/components/landing/Section";
+import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 
 export const Route = createFileRoute("/metodo")({
