@@ -44,7 +44,6 @@ type State = {
   chi_se_ne_occupa: string;
   frustrazione: string;
   obiettivo_call: string;
-  orario_preferito: string;
   consenso: boolean;
 };
 
@@ -66,7 +65,6 @@ const initial: State = {
   chi_se_ne_occupa: "",
   frustrazione: "",
   obiettivo_call: "",
-  orario_preferito: "",
   consenso: false,
 };
 
@@ -135,7 +133,7 @@ const questions: Question[] = [
     type: "choice",
     intro: "La tua azienda",
     label: "Quanti siete in azienda?",
-    options: ["1-10", "11-50", "51-100", "Oltre 100"],
+    options: ["1-10", "11-25", "26-50", "51-100", "Oltre 100"],
   },
   {
     key: "settore",
@@ -231,13 +229,6 @@ const questions: Question[] = [
     optional: true,
   },
   {
-    key: "orario_preferito",
-    type: "choice",
-    label: "Quando preferisci essere ricontattato?",
-    options: ["Mattina", "Pausa pranzo", "Pomeriggio", "Indifferente"],
-    optional: true,
-  },
-  {
     key: "consenso",
     type: "consent",
     label: "Un ultimo passaggio",
@@ -329,7 +320,6 @@ function CheckUpPage() {
       chi_se_ne_occupa: state.chi_se_ne_occupa,
       frustrazioni: state.frustrazione ? [state.frustrazione] : [],
       obiettivo_call: state.obiettivo_call.trim() || null,
-      orario_preferito: state.orario_preferito || null,
       consenso_privacy: state.consenso,
       source: source || null,
       utm: Object.keys(utm).length ? utm : null,
