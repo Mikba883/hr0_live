@@ -215,15 +215,22 @@ function HrEsternoPage() {
       <Section>
         <H2>La persona che entrerà nella tua azienda</H2>
         <div className="mt-10 grid gap-8 md:grid-cols-[240px_1fr] md:items-start">
-          <div className="mx-auto flex aspect-square w-full max-w-[240px] items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-dark font-display text-6xl text-white">
-            MB
-          </div>
+          <img
+            src="/Photo.png"
+            alt="Michele Baroni, consulente HR per PMI"
+            loading="lazy"
+            className="mx-auto aspect-square w-full max-w-[240px] rounded-2xl object-cover"
+          />
           <div className="space-y-4 text-lg text-ink-soft">
             <p>
-              Mi chiamo <span className="font-semibold text-ink">Michele Baroni</span>.{" "}
-              [2-3 righe sul percorso: esperienze chiave, eventuali brand
-              riconoscibili — se hai lavorato con realtà come Bain & Company,
-              dillo qui, per un imprenditore vale più di mille aggettivi].
+              Mi chiamo <span className="font-semibold text-ink">Michele Baroni</span>.
+              Mi occupo di persone e organizzazione da oltre 8 anni: ho iniziato
+              in <span className="font-semibold text-ink">Accenture</span> come
+              consulente Talent & Organization, dove ho lavorato su selezione e
+              sviluppo per grandi aziende, e oggi gestisco ricerche di personale
+              come partner freelance di{" "}
+              <span className="font-semibold text-ink">Bain & Company</span>{" "}
+              attraverso il Results Talent Network.
             </p>
             <p>
               Ho scelto di lavorare con le PMI perché è dove le persone giuste —
@@ -237,7 +244,7 @@ function HrEsternoPage() {
           </div>
         </div>
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {["[Anni di esperienza]", "[N. selezioni gestite / aziende seguite]", "Garanzia di sostituzione su ogni inserimento"].map((b) => (
+          {bioBadges.map((b) => (
             <div
               key={b}
               className="flex items-center gap-2 rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink"
