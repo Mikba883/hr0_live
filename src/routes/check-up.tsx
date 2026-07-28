@@ -320,7 +320,6 @@ function CheckUpPage() {
       chi_se_ne_occupa: state.chi_se_ne_occupa,
       frustrazioni: state.frustrazione ? [state.frustrazione] : [],
       obiettivo_call: state.obiettivo_call.trim() || null,
-      orario_preferito: state.orario_preferito || null,
       consenso_privacy: state.consenso,
       source: source || null,
       utm: Object.keys(utm).length ? utm : null,
