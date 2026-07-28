@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/check-up")({
@@ -24,40 +24,27 @@ export const Route = createFileRoute("/check-up")({
   component: CheckUpPage,
 });
 
-// -------------------- tipi & opzioni --------------------
-
-type Frustrazione =
-  | "Tempi lunghi"
-  | "Pochi candidati validi"
-  | "Persone che se ne vanno presto"
-  | "Costi delle agenzie"
-  | "Il tempo che mi porta via"
-  | "Nessuna esperienza particolare";
+// -------------------- state --------------------
 
 type State = {
-  // Blocco 1
   nome: string;
   azienda: string;
   ruolo: string;
   email: string;
   telefono: string;
-  // Blocco 2
   dipendenti: string;
   settore: string;
   assumere_12m: string;
   momento_azienda: string;
-  // Blocco 3
   ruolo_aperto: string;
   ruolo_quale: string;
   urgenza: string;
   tempo_scoperto: string;
   prima_volta: string;
   chi_se_ne_occupa: string;
-  frustrazioni: Frustrazione[];
-  // Chiusura
+  frustrazione: string;
   obiettivo_call: string;
   orario_preferito: string;
-  // Privacy
   consenso: boolean;
 };
 
@@ -77,58 +64,198 @@ const initial: State = {
   tempo_scoperto: "",
   prima_volta: "",
   chi_se_ne_occupa: "",
-  frustrazioni: [],
+  frustrazione: "",
   obiettivo_call: "",
   orario_preferito: "",
   consenso: false,
 };
 
-const RUOLI = ["Titolare", "Direzione", "Responsabile HR", "Office manager", "Altro"];
-const DIPENDENTI = ["1-10", "11-50", "51-100", "Oltre 100"];
-const ASSUMERE = ["No", "Sì, 1 persona", "Sì, 2-3 persone", "Sì, più di 3"];
-const MOMENTO = ["Crescendo velocemente", "Crescendo con calma", "Stabile", "Riorganizzandosi"];
-const RUOLO_APERTO = ["Sì, uno", "Sì, più di uno", "No, ragiono sul medio periodo"];
-const URGENZA = ["Serviva ieri", "Entro 1 mese", "Entro 3 mesi", "Nessuna fretta"];
-const TEMPO_SCOPERTO = ["Meno di 1 mese", "1-3 mesi", "Oltre 3 mesi"];
-const PRIMA_VOLTA = [
-  "Sì, prima volta",
-  "No, l'abbiamo già cercata in passato",
-  "No, stiamo sostituendo una persona che è uscita",
-];
-const CHI_SE_NE_OCCUPA = [
-  "Io titolare",
-  "Un ufficio non dedicato",
-  "Una persona interna HR",
-  "Un'agenzia esterna",
-  "Nessuno in modo strutturato",
-];
-const FRUSTRAZIONI: Frustrazione[] = [
-  "Tempi lunghi",
-  "Pochi candidati validi",
-  "Persone che se ne vanno presto",
-  "Costi delle agenzie",
-  "Il tempo che mi porta via",
-  "Nessuna esperienza particolare",
-];
-const ORARIO = ["Mattina", "Pausa pranzo", "Pomeriggio", "Indifferente"];
-
-// -------------------- validators --------------------
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^(\+?39[\s-]?)?[0-9\s-]{6,}$/;
+
+// -------------------- questions definition --------------------
+
+type BaseQ = {
+  key: keyof State;
+  intro?: string;
+  label: string;
+  hint?: string;
+  show?: (s: State) => boolean;
+  validate?: (s: State) => string | null;
+};
+type Question =
+  | (BaseQ & { type: "text" | "email" | "tel"; placeholder?: string; autoComplete?: string })
+  | (BaseQ & { type: "textarea"; placeholder?: string; optional?: true })
+  | (BaseQ & { type: "choice"; options: string[]; optional?: true })
+  | (BaseQ & { type: "consent" });
+
+const questions: Question[] = [
+  {
+    key: "nome",
+    type: "text",
+    intro: "Iniziamo",
+    label: "Come ti chiami?",
+    placeholder: "Nome e cognome",
+    autoComplete: "name",
+    validate: (s) => (s.nome.trim().length > 1 ? null : "Scrivi almeno 2 caratteri."),
+  },
+  {
+    key: "azienda",
+    type: "text",
+    label: "Come si chiama la tua azienda?",
+    placeholder: "Es. Rossi S.r.l.",
+    autoComplete: "organization",
+    validate: (s) => (s.azienda.trim().length > 1 ? null : "Scrivi il nome dell'azienda."),
+  },
+  {
+    key: "ruolo",
+    type: "choice",
+    label: "Qual è il tuo ruolo in azienda?",
+    options: ["Titolare", "Direzione", "Responsabile HR", "Office manager", "Altro"],
+  },
+  {
+    key: "email",
+    type: "email",
+    label: "Qual è la tua email aziendale?",
+    placeholder: "nome@azienda.it",
+    autoComplete: "email",
+    validate: (s) => (EMAIL_RE.test(s.email) ? null : "Controlla l'email."),
+  },
+  {
+    key: "telefono",
+    type: "tel",
+    label: "A che numero posso ricontattarti?",
+    hint: "Ti chiamo solo per fissare l'appuntamento.",
+    placeholder: "+39…",
+    autoComplete: "tel",
+    validate: (s) => (PHONE_RE.test(s.telefono.trim()) ? null : "Controlla il numero."),
+  },
+  {
+    key: "dipendenti",
+    type: "choice",
+    intro: "La tua azienda",
+    label: "Quanti siete in azienda?",
+    options: ["1-10", "11-50", "51-100", "Oltre 100"],
+  },
+  {
+    key: "settore",
+    type: "text",
+    label: "In che settore lavorate?",
+    placeholder: "Es. metalmeccanico, servizi, retail…",
+    validate: (s) => (s.settore.trim().length > 1 ? null : "Scrivi il settore."),
+  },
+  {
+    key: "assumere_12m",
+    type: "choice",
+    label: "Pensate di assumere nei prossimi 12 mesi?",
+    options: ["No", "Sì, 1 persona", "Sì, 2-3 persone", "Sì, più di 3"],
+  },
+  {
+    key: "momento_azienda",
+    type: "choice",
+    label: "L'azienda in questo momento sta…",
+    options: ["Crescendo velocemente", "Crescendo con calma", "Stabile", "Riorganizzandosi"],
+  },
+  {
+    key: "ruolo_aperto",
+    type: "choice",
+    intro: "La ricerca in corso",
+    label: "C'è un ruolo aperto adesso che ti preme coprire?",
+    options: ["Sì, uno", "Sì, più di uno", "No, ragiono sul medio periodo"],
+  },
+  {
+    key: "ruolo_quale",
+    type: "text",
+    label: "Quale ruolo?",
+    placeholder: "Es. commerciale estero, responsabile produzione…",
+    show: (s) => s.ruolo_aperto === "Sì, uno" || s.ruolo_aperto === "Sì, più di uno",
+    validate: (s) => (s.ruolo_quale.trim().length > 0 ? null : "Indica quale ruolo."),
+  },
+  {
+    key: "urgenza",
+    type: "choice",
+    label: "Quanto è urgente questa assunzione?",
+    options: ["Serviva ieri", "Entro 1 mese", "Entro 3 mesi", "Nessuna fretta"],
+    show: (s) => s.ruolo_aperto === "Sì, uno" || s.ruolo_aperto === "Sì, più di uno",
+  },
+  {
+    key: "tempo_scoperto",
+    type: "choice",
+    label: "Da quanto tempo il ruolo è scoperto?",
+    options: ["Meno di 1 mese", "1-3 mesi", "Oltre 3 mesi"],
+    show: (s) => s.ruolo_aperto === "Sì, uno" || s.ruolo_aperto === "Sì, più di uno",
+  },
+  {
+    key: "prima_volta",
+    type: "choice",
+    label: "È la prima volta che cercate una figura come questa?",
+    options: [
+      "Sì, prima volta",
+      "No, l'abbiamo già cercata in passato",
+      "No, stiamo sostituendo una persona uscita",
+    ],
+    show: (s) => s.ruolo_aperto === "Sì, uno" || s.ruolo_aperto === "Sì, più di uno",
+  },
+  {
+    key: "chi_se_ne_occupa",
+    type: "choice",
+    label: "Oggi, di assunzioni e selezione chi se ne occupa?",
+    options: [
+      "Io titolare",
+      "Un ufficio non dedicato",
+      "Una persona interna HR",
+      "Un'agenzia esterna",
+      "Nessuno in modo strutturato",
+    ],
+  },
+  {
+    key: "frustrazione",
+    type: "choice",
+    label: "Cosa ti ha frustrato di più nelle assunzioni fatte finora?",
+    hint: "Scegli quella che pesa di più.",
+    options: [
+      "Tempi lunghi",
+      "Pochi candidati validi",
+      "Persone che se ne vanno presto",
+      "Costi delle agenzie",
+      "Il tempo che mi porta via",
+      "Nessuna esperienza particolare",
+    ],
+  },
+  {
+    key: "obiettivo_call",
+    type: "textarea",
+    intro: "Ultime due cose",
+    label: "C'è qualcosa di specifico che vorresti capire durante il check-up?",
+    placeholder: "Scrivi qui, anche due righe. (facoltativo)",
+    optional: true,
+  },
+  {
+    key: "orario_preferito",
+    type: "choice",
+    label: "Quando preferisci essere ricontattato?",
+    options: ["Mattina", "Pausa pranzo", "Pomeriggio", "Indifferente"],
+    optional: true,
+  },
+  {
+    key: "consenso",
+    type: "consent",
+    label: "Un ultimo passaggio",
+  },
+];
 
 // -------------------- page --------------------
 
 function CheckUpPage() {
   const navigate = useNavigate();
   const [state, setState] = useState<State>(initial);
-  const [step, setStep] = useState(0);
+  const [index, setIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const [utm, setUtm] = useState<Record<string, string>>({});
   const [source, setSource] = useState<string>("");
 
-  // Utm + source dalla pagina precedente
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const collected: Record<string, string> = {};
@@ -140,70 +267,50 @@ function CheckUpPage() {
     setSource(params.get("src") || document.referrer || "");
   }, []);
 
+  const visible = useMemo(() => questions.filter((q) => !q.show || q.show(state)), [state]);
+  const total = visible.length;
+  const safeIndex = Math.min(index, total - 1);
+  const q = visible[safeIndex];
+  const progress = ((safeIndex + 1) / total) * 100;
+
   const set = <K extends keyof State>(k: K, v: State[K]) =>
     setState((s) => ({ ...s, [k]: v }));
 
-  // Step 3: 3.2-3.5 solo se ruolo_aperto positivo
-  const showDettagliRuolo =
-    state.ruolo_aperto === "Sì, uno" || state.ruolo_aperto === "Sì, più di uno";
+  const currentError = useMemo(() => {
+    if (!q) return null;
+    if (q.type === "consent") return state.consenso ? null : "Serve il consenso per procedere.";
+    if (q.type === "textarea" && q.optional) return null;
+    if (q.type === "choice" && q.optional) return null;
+    if (q.type === "choice") return state[q.key] ? null : "Scegli un'opzione.";
+    if (q.validate) return q.validate(state);
+    return null;
+  }, [q, state]);
 
-  // Validazione per step (blocca "Avanti")
-  const stepValid = useMemo(() => {
-    switch (step) {
-      case 0:
-        return (
-          state.nome.trim().length > 1 &&
-          state.azienda.trim().length > 1 &&
-          state.ruolo &&
-          EMAIL_RE.test(state.email) &&
-          PHONE_RE.test(state.telefono.trim())
-        );
-      case 1:
-        return (
-          state.dipendenti &&
-          state.settore.trim().length > 1 &&
-          state.assumere_12m &&
-          state.momento_azienda
-        );
-      case 2:
-        if (!state.ruolo_aperto) return false;
-        if (!state.chi_se_ne_occupa) return false;
-        if (state.frustrazioni.length === 0) return false;
-        if (showDettagliRuolo) {
-          return (
-            state.ruolo_quale.trim().length > 0 &&
-            !!state.urgenza &&
-            !!state.tempo_scoperto &&
-            !!state.prima_volta
-          );
-        }
-        return true;
-      case 3:
-        return state.consenso;
-      default:
-        return true;
+  const goNext = () => {
+    if (currentError) {
+      setTouched(true);
+      return;
     }
-  }, [state, step, showDettagliRuolo]);
-
-  const totalSteps = 4;
-  const progress = ((step + 1) / totalSteps) * 100;
-
-  const next = () => {
-    if (!stepValid) return;
+    setTouched(false);
     setError(null);
-    setStep((s) => Math.min(totalSteps - 1, s + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (safeIndex >= total - 1) {
+      void submit();
+    } else {
+      setIndex(safeIndex + 1);
+    }
   };
-  const prev = () => {
+
+  const goPrev = () => {
+    setTouched(false);
     setError(null);
-    setStep((s) => Math.max(0, s - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (safeIndex > 0) setIndex(safeIndex - 1);
   };
 
   const submit = async () => {
-    if (!stepValid) return;
     setSubmitting(true);
     setError(null);
+    const openRole =
+      state.ruolo_aperto === "Sì, uno" || state.ruolo_aperto === "Sì, più di uno";
     const payload = {
       nome: state.nome.trim(),
       azienda: state.azienda.trim(),
@@ -215,33 +322,30 @@ function CheckUpPage() {
       assumere_12m: state.assumere_12m,
       momento_azienda: state.momento_azienda,
       ruolo_aperto: state.ruolo_aperto,
-      ruolo_quale: showDettagliRuolo ? state.ruolo_quale.trim() : null,
-      urgenza: showDettagliRuolo ? state.urgenza : null,
-      tempo_scoperto: showDettagliRuolo ? state.tempo_scoperto : null,
-      prima_volta: showDettagliRuolo ? state.prima_volta : null,
+      ruolo_quale: openRole ? state.ruolo_quale.trim() : null,
+      urgenza: openRole ? state.urgenza : null,
+      tempo_scoperto: openRole ? state.tempo_scoperto : null,
+      prima_volta: openRole ? state.prima_volta : null,
       chi_se_ne_occupa: state.chi_se_ne_occupa,
-      frustrazioni: state.frustrazioni,
+      frustrazioni: state.frustrazione ? [state.frustrazione] : [],
       obiettivo_call: state.obiettivo_call.trim() || null,
       orario_preferito: state.orario_preferito || null,
       consenso_privacy: state.consenso,
       source: source || null,
       utm: Object.keys(utm).length ? utm : null,
     };
-
     const { error: e } = await supabase.from("survey_responses").insert(payload);
     setSubmitting(false);
     if (e) {
       console.error(e);
-      setError(
-        "Non sono riuscito a salvare le tue risposte. Controlla la connessione e riprova.",
-      );
+      setError("Non sono riuscito a salvare le tue risposte. Riprova.");
       return;
     }
     navigate({ to: "/grazie", search: { tel: state.telefono.trim() } as never });
   };
 
   return (
-    <main className="min-h-screen bg-surface">
+    <main className="flex min-h-screen flex-col bg-surface">
       {/* Top bar */}
       <div className="border-b border-hairline bg-white">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
@@ -249,7 +353,7 @@ function CheckUpPage() {
             Check-up Assunzioni
           </span>
           <span className="text-xs font-semibold text-ink-soft">
-            Passo {step + 1} di {totalSteps}
+            {safeIndex + 1} / {total}
           </span>
         </div>
         <div className="h-1 w-full bg-hairline">
@@ -260,177 +364,151 @@ function CheckUpPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-2xl px-5 py-10 sm:py-16">
-        {step === 0 && (
-          <StepIntro
-            title="Chi sei"
-            subtitle="Check-up Assunzioni gratuito. Rispondi a poche domande: arriviamo alla call già preparati e ne esci con una lettura onesta di dove stai perdendo tempo e soldi nelle assunzioni."
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 py-10 sm:py-16">
+        {q && (
+          <QuestionCard
+            q={q}
+            state={state}
+            set={set}
+            touched={touched}
+            error={currentError}
+            onEnter={goNext}
+          />
+        )}
+
+        {error && (
+          <div className="mt-6 rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
+
+        {/* Nav */}
+        <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {safeIndex > 0 ? (
+            <button
+              type="button"
+              onClick={goPrev}
+              className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+            >
+              ← Indietro
+            </button>
+          ) : (
+            <span />
+          )}
+
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={submitting}
+            className="inline-flex w-full items-center justify-center rounded-full bg-brand px-8 py-4 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(107,33,255,0.55)] transition-all hover:bg-brand-dark hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-hairline disabled:text-ink-soft disabled:shadow-none disabled:hover:translate-y-0 sm:w-auto"
           >
-            <TextField
-              label="Nome e cognome"
-              value={state.nome}
-              onChange={(v) => set("nome", v)}
-              autoComplete="name"
-              autoFocus
-            />
-            <TextField
-              label="Azienda"
-              value={state.azienda}
-              onChange={(v) => set("azienda", v)}
-              autoComplete="organization"
-            />
-            <PillGroup
-              label="Il tuo ruolo in azienda"
-              options={RUOLI}
-              value={state.ruolo}
-              onChange={(v) => set("ruolo", v)}
-            />
-            <TextField
-              label="Email aziendale"
-              type="email"
-              value={state.email}
-              onChange={(v) => set("email", v)}
-              autoComplete="email"
-              error={
-                state.email.length > 0 && !EMAIL_RE.test(state.email)
-                  ? "Controlla l'email, il formato non sembra corretto."
-                  : undefined
-              }
-            />
-            <TextField
-              label="Telefono"
-              type="tel"
-              value={state.telefono}
-              onChange={(v) => set("telefono", v)}
-              autoComplete="tel"
-              hint="Ti contatto a questo numero per fissare l'appuntamento."
-              error={
-                state.telefono.length > 0 && !PHONE_RE.test(state.telefono.trim())
-                  ? "Controlla il numero di telefono, sembra incompleto."
-                  : undefined
-              }
-            />
-          </StepIntro>
-        )}
+            {safeIndex >= total - 1
+              ? submitting
+                ? "Invio in corso…"
+                : "Prenota il check-up gratuito"
+              : "Continua →"}
+          </button>
+        </div>
 
-        {step === 1 && (
-          <StepIntro title="La tua azienda">
-            <PillGroup
-              label="Numero di dipendenti"
-              options={DIPENDENTI}
-              value={state.dipendenti}
-              onChange={(v) => set("dipendenti", v)}
-            />
-            <TextField
-              label="Settore"
-              value={state.settore}
-              onChange={(v) => set("settore", v)}
-              placeholder="Es. metalmeccanico, servizi, retail…"
-            />
-            <PillGroup
-              label="Pensate di assumere nei prossimi 12 mesi?"
-              options={ASSUMERE}
-              value={state.assumere_12m}
-              onChange={(v) => set("assumere_12m", v)}
-            />
-            <PillGroup
-              label="L'azienda in questo momento sta..."
-              options={MOMENTO}
-              value={state.momento_azienda}
-              onChange={(v) => set("momento_azienda", v)}
-            />
-          </StepIntro>
-        )}
+        <p className="mt-8 text-center text-xs text-ink-soft">
+          Premi <kbd className="rounded border border-hairline bg-white px-1.5 py-0.5 text-[10px] font-semibold">Invio ↵</kbd> per continuare
+        </p>
+      </div>
+    </main>
+  );
+}
 
-        {step === 2 && (
-          <StepIntro title="La ricerca che hai in corso">
-            <PillGroup
-              label="C'è un ruolo aperto adesso che ti preme coprire?"
-              options={RUOLO_APERTO}
-              value={state.ruolo_aperto}
-              onChange={(v) => {
-                set("ruolo_aperto", v);
-                if (v === "No, ragiono sul medio periodo") {
-                  setState((s) => ({
-                    ...s,
-                    ruolo_aperto: v,
-                    ruolo_quale: "",
-                    urgenza: "",
-                    tempo_scoperto: "",
-                    prima_volta: "",
-                  }));
+// -------------------- question card --------------------
+
+function QuestionCard({
+  q,
+  state,
+  set,
+  touched,
+  error,
+  onEnter,
+}: {
+  q: Question;
+  state: State;
+  set: <K extends keyof State>(k: K, v: State[K]) => void;
+  touched: boolean;
+  error: string | null;
+  onEnter: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    // Focus the input when the question changes
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [q.key]);
+
+  const showErr = touched && error;
+
+  return (
+    <div key={q.key as string} className="animate-[fadeInUp_.35s_ease-out]">
+      {q.intro && (
+        <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-brand">
+          {q.intro}
+        </div>
+      )}
+      <h1 className="text-3xl leading-tight text-ink sm:text-4xl">{q.label}</h1>
+      {q.hint && <p className="mt-3 text-base text-ink-soft">{q.hint}</p>}
+
+      <div className="mt-8">
+        {(q.type === "text" || q.type === "email" || q.type === "tel") && (
+          <>
+            <input
+              ref={(el) => (inputRef.current = el)}
+              type={q.type}
+              value={state[q.key] as string}
+              onChange={(e) => set(q.key, e.target.value as never)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onEnter();
                 }
               }}
+              placeholder={"placeholder" in q ? q.placeholder : undefined}
+              autoComplete={"autoComplete" in q ? q.autoComplete : undefined}
+              inputMode={q.type === "tel" ? "tel" : q.type === "email" ? "email" : undefined}
+              className={`w-full border-b-2 bg-transparent px-1 py-3 text-2xl outline-none transition-colors placeholder:text-ink-soft/50 focus:border-brand ${
+                showErr ? "border-danger" : "border-hairline"
+              }`}
             />
-
-            {showDettagliRuolo && (
-              <>
-                <TextField
-                  label="Quale ruolo?"
-                  value={state.ruolo_quale}
-                  onChange={(v) => set("ruolo_quale", v)}
-                  placeholder="Es. commerciale estero, responsabile produzione…"
-                />
-                <PillGroup
-                  label="Quanto è urgente questa assunzione?"
-                  options={URGENZA}
-                  value={state.urgenza}
-                  onChange={(v) => set("urgenza", v)}
-                />
-                <PillGroup
-                  label="Da quanto tempo il ruolo è scoperto?"
-                  options={TEMPO_SCOPERTO}
-                  value={state.tempo_scoperto}
-                  onChange={(v) => set("tempo_scoperto", v)}
-                />
-                <PillGroup
-                  label="È la prima volta che cercate una figura come questa?"
-                  options={PRIMA_VOLTA}
-                  value={state.prima_volta}
-                  onChange={(v) => set("prima_volta", v)}
-                />
-              </>
-            )}
-
-            <PillGroup
-              label="Oggi, di assunzioni e selezione chi se ne occupa?"
-              options={CHI_SE_NE_OCCUPA}
-              value={state.chi_se_ne_occupa}
-              onChange={(v) => set("chi_se_ne_occupa", v)}
-            />
-            <PillGroup
-              label="Cosa vi ha frustrato di più nelle assunzioni fatte finora?"
-              options={FRUSTRAZIONI}
-              value={state.frustrazioni}
-              onChange={(v) => set("frustrazioni", v as Frustrazione[])}
-              multi
-              hint="Puoi selezionarne più di una."
-            />
-          </StepIntro>
+            {showErr && <p className="mt-2 text-sm text-danger">{error}</p>}
+          </>
         )}
 
-        {step === 3 && (
-          <StepIntro title="Ultima cosa">
-            <div>
-              <label className="mb-2 block text-base font-semibold text-ink">
-                C'è qualcosa di specifico che vorresti capire durante il check-up?
-              </label>
-              <textarea
-                value={state.obiettivo_call}
-                onChange={(e) => set("obiettivo_call", e.target.value)}
-                rows={4}
-                placeholder="Scrivi qui, anche due righe"
-                className="w-full rounded-lg border border-hairline bg-white px-4 py-3 text-base outline-none transition-colors focus:border-brand"
-              />
-            </div>
-            <PillGroup
-              label="Quando preferisci essere ricontattato?"
-              options={ORARIO}
-              value={state.orario_preferito}
-              onChange={(v) => set("orario_preferito", v)}
-              optional
-            />
+        {q.type === "textarea" && (
+          <textarea
+            ref={(el) => (inputRef.current = el)}
+            value={state[q.key] as string}
+            onChange={(e) => set(q.key, e.target.value as never)}
+            rows={4}
+            placeholder={q.placeholder}
+            className="w-full rounded-lg border border-hairline bg-white px-4 py-3 text-base outline-none transition-colors focus:border-brand"
+          />
+        )}
 
+        {q.type === "choice" && (
+          <ChoiceList
+            options={q.options}
+            value={state[q.key] as string}
+            onSelect={(v) => {
+              set(q.key, v as never);
+              // Auto-advance on choice select (Typeform style)
+              setTimeout(() => onEnter(), 220);
+            }}
+          />
+        )}
+
+        {q.type === "choice" && showErr && (
+          <p className="mt-3 text-sm text-danger">{error}</p>
+        )}
+
+        {q.type === "consent" && (
+          <div className="space-y-4">
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-hairline bg-white p-4">
               <input
                 type="checkbox"
@@ -446,172 +524,54 @@ function CheckUpPage() {
                 e acconsento al trattamento dei miei dati per essere ricontattato.
               </span>
             </label>
-
-            {error && (
-              <div className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
-                {error}
-              </div>
-            )}
-          </StepIntro>
+            {showErr && <p className="text-sm text-danger">{error}</p>}
+          </div>
         )}
-
-        {/* Nav */}
-        <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {step > 0 ? (
-            <button
-              type="button"
-              onClick={prev}
-              className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
-            >
-              ← Indietro
-            </button>
-          ) : (
-            <span />
-          )}
-
-          {step < totalSteps - 1 ? (
-            <button
-              type="button"
-              onClick={next}
-              disabled={!stepValid}
-              className="inline-flex w-full items-center justify-center rounded-full bg-brand px-8 py-4 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(107,33,255,0.55)] transition-all hover:bg-brand-dark hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-hairline disabled:text-ink-soft disabled:shadow-none disabled:hover:translate-y-0 sm:w-auto"
-            >
-              Continua →
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={!stepValid || submitting}
-              className="inline-flex w-full items-center justify-center rounded-full bg-brand px-8 py-4 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(107,33,255,0.55)] transition-all hover:bg-brand-dark hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-hairline disabled:text-ink-soft disabled:shadow-none disabled:hover:translate-y-0 sm:w-auto"
-            >
-              {submitting ? "Invio in corso…" : "Prenota il check-up gratuito"}
-            </button>
-          )}
-        </div>
-
-        {/* Trust */}
-        <p className="mt-8 text-center text-xs text-ink-soft">
-          Nessuna newsletter, nessuno spam. Ti contatto solo per fissare la call.
-        </p>
       </div>
-    </main>
-  );
-}
-
-// -------------------- pieces --------------------
-
-function StepIntro({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <h1 className="text-3xl leading-tight text-ink sm:text-4xl">{title}</h1>
-      {subtitle && <p className="mt-3 text-base text-ink-soft sm:text-lg">{subtitle}</p>}
-      <div className="mt-8 space-y-6">{children}</div>
     </div>
   );
 }
 
-function TextField({
-  label,
+// -------------------- choice list (vertical, Typeform style) --------------------
+
+function ChoiceList({
+  options,
   value,
-  onChange,
-  type = "text",
-  placeholder,
-  hint,
-  error,
-  autoComplete,
-  autoFocus,
+  onSelect,
 }: {
-  label: string;
+  options: string[];
   value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-  hint?: string;
-  error?: string;
-  autoComplete?: string;
-  autoFocus?: boolean;
+  onSelect: (v: string) => void;
 }) {
   return (
-    <div>
-      <label className="mb-2 block text-base font-semibold text-ink">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
-        className={`w-full rounded-lg border bg-white px-4 py-3 text-base outline-none transition-colors focus:border-brand ${
-          error ? "border-danger" : "border-hairline"
-        }`}
-      />
-      {hint && !error && <p className="mt-1.5 text-xs text-ink-soft">{hint}</p>}
-      {error && <p className="mt-1.5 text-xs text-danger">{error}</p>}
-    </div>
-  );
-}
-
-type PillGroupProps = {
-  label: string;
-  options: string[];
-  optional?: boolean;
-  hint?: string;
-} & (
-  | { multi?: false; value: string; onChange: (v: string) => void }
-  | { multi: true; value: string[]; onChange: (v: string[]) => void }
-);
-
-function PillGroup(props: PillGroupProps) {
-  const { label, options, optional = false, hint } = props;
-
-  const isSelected = (opt: string) =>
-    props.multi ? props.value.includes(opt) : props.value === opt;
-
-  const toggle = (opt: string) => {
-    if (props.multi) {
-      const arr = props.value;
-      props.onChange(arr.includes(opt) ? arr.filter((x) => x !== opt) : [...arr, opt]);
-    } else {
-      props.onChange(opt);
-    }
-  };
-
-  return (
-    <div>
-      <label className="mb-3 block text-base font-semibold text-ink">
-        {label}
-        {optional && <span className="ml-2 text-xs font-normal text-ink-soft">(facoltativo)</span>}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const selected = isSelected(opt);
-          return (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => toggle(opt)}
-              className={`rounded-full border px-4 py-2.5 text-sm font-medium transition-all sm:text-base ${
+    <div className="flex flex-col gap-3">
+      {options.map((opt, i) => {
+        const selected = value === opt;
+        const letter = String.fromCharCode(65 + i);
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onSelect(opt)}
+            className={`group flex w-full items-center gap-4 rounded-xl border-2 bg-white px-5 py-4 text-left text-base transition-all sm:text-lg ${
+              selected
+                ? "border-brand bg-brand/5 shadow-[0_8px_24px_-12px_rgba(107,33,255,0.5)]"
+                : "border-hairline hover:border-brand/60 hover:bg-brand/[0.02]"
+            }`}
+          >
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
                 selected
-                  ? "border-brand bg-brand text-white shadow-[0_8px_20px_-10px_rgba(107,33,255,0.6)]"
-                  : "border-hairline bg-white text-ink hover:border-brand hover:text-brand"
+                  ? "border-brand bg-brand text-white"
+                  : "border-hairline bg-surface text-ink-soft group-hover:border-brand group-hover:text-brand"
               }`}
             >
-              {opt}
-            </button>
-          );
-        })}
-      </div>
-      {hint && <p className="mt-2 text-xs text-ink-soft">{hint}</p>}
+              {letter}
+            </span>
+            <span className={selected ? "font-semibold text-ink" : "text-ink"}>{opt}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
