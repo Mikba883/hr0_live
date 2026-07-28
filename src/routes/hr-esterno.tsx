@@ -13,7 +13,6 @@ import { CtaButton } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
-import { LeadForm } from "@/components/landing/LeadForm";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 
@@ -68,7 +67,7 @@ function HrEsternoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Direzione HR esterna a giornate ·{" "}
-        <a href="#form" className="text-brand underline underline-offset-2">Call gratuita di dimensionamento</a>
+        <a href="/check-up" className="text-brand underline underline-offset-2">Call gratuita di dimensionamento</a>
       </AnnouncementBar>
 
       {/* Hero */}
@@ -85,7 +84,7 @@ function HrEsternoPage() {
             a fare l'imprenditore, io mi occupo delle persone.
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="#form">Verifica se fa per te — call gratuita di 30 min →</CtaButton>
+            <CtaButton href="/check-up">Verifica se fa per te — call gratuita di 30 min →</CtaButton>
             <p className="text-xs uppercase tracking-widest text-ink-soft">
               Dimensioniamo insieme · Nessun impegno · Onesto anche se non ti serve
             </p>
@@ -268,8 +267,11 @@ function HrEsternoPage() {
             la risposta è "poche" o "nessuna".
           </p>
         </div>
-        <div className="mx-auto mt-10 max-w-xl">
-          <LeadForm ctaLabel="Prenota la call di dimensionamento →" />
+        <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
+          <CtaButton href="/check-up">Prenota la call di dimensionamento →</CtaButton>
+          <p className="text-xs uppercase tracking-widest text-ink-soft">
+            2 minuti di survey · Ti richiamo entro 48 ore
+          </p>
         </div>
       </Section>
 

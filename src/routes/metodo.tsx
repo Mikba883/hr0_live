@@ -5,7 +5,6 @@ import { CtaButton } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
-import { LeadForm } from "@/components/landing/LeadForm";
 import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
@@ -61,7 +60,7 @@ function MetodoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Costruisci il metodo di assunzione dentro la tua azienda ·{" "}
-        <a href="#form" className="text-brand underline underline-offset-2">Check-up gratis</a>
+        <a href="/check-up" className="text-brand underline underline-offset-2">Check-up gratis</a>
       </AnnouncementBar>
 
       {/* Hero */}
@@ -78,7 +77,7 @@ function MetodoPage() {
             prima posizione vera che devi coprire.
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="#form">Scopri il metodo →</CtaButton>
+            <CtaButton href="/check-up">Scopri il metodo →</CtaButton>
             <p className="text-xs uppercase tracking-widest text-ink-soft">
               30 min · Nessun impegno · Ti dico se fa per te
             </p>
@@ -200,8 +199,11 @@ function MetodoPage() {
             se puoi accedere ai fondi. Poi decidi tu.
           </p>
         </div>
-        <div className="mx-auto mt-10 max-w-xl">
-          <LeadForm ctaLabel="Prenota il tuo check-up gratuito →" />
+        <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
+          <CtaButton href="/check-up">Prenota il tuo check-up gratuito →</CtaButton>
+          <p className="text-xs uppercase tracking-widest text-ink-soft">
+            2 minuti di survey · Ti richiamo entro 48 ore
+          </p>
         </div>
       </Section>
 
