@@ -561,12 +561,6 @@ function TextField({
   );
 }
 
-function PillGroup({
-  label,
-  options,
-  value,
-  onChange,
-  multi = false,
 type PillGroupProps = {
   label: string;
   options: string[];
