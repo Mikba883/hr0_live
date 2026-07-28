@@ -13,7 +13,7 @@ export function LeadForm({ ctaLabel }: { ctaLabel: string }) {
 
   if (sent) {
     return (
-      <div className="rounded-lg border border-brand/30 bg-info-bg p-6 text-center">
+      <div className="rounded-2xl border border-brand/30 bg-info-bg p-6 text-center">
         <p className="text-lg font-semibold text-ink">Richiesta ricevuta</p>
         <p className="mt-1 text-ink-soft">Ti ricontatto entro 24 ore.</p>
       </div>
@@ -31,7 +31,7 @@ export function LeadForm({ ctaLabel }: { ctaLabel: string }) {
           required
           value={form.nome}
           onChange={(e) => setForm({ ...form, nome: e.target.value })}
-          className="w-full rounded-md border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
+          className="w-full rounded-xl border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
         />
       </div>
       <div>
@@ -43,7 +43,7 @@ export function LeadForm({ ctaLabel }: { ctaLabel: string }) {
           required
           value={form.azienda}
           onChange={(e) => setForm({ ...form, azienda: e.target.value })}
-          className="w-full rounded-md border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
+          className="w-full rounded-xl border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
         />
       </div>
       <div>
@@ -55,12 +55,12 @@ export function LeadForm({ ctaLabel }: { ctaLabel: string }) {
           required
           value={form.contatto}
           onChange={(e) => setForm({ ...form, contatto: e.target.value })}
-          className="w-full rounded-md border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
+          className="w-full rounded-xl border border-hairline bg-white px-4 py-3 text-base outline-none focus:border-brand"
         />
       </div>
       <button
         type="submit"
-        className="w-full rounded-md bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
+        className="w-full rounded-full bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
       >
         {ctaLabel}
       </button>

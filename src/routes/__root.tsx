@@ -24,7 +24,7 @@ function NotFoundComponent() {
         <div className="mt-6 flex justify-center gap-2">
           <Link
             to="/costo"
-            className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Vai al check-up
           </Link>
@@ -56,13 +56,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Riprova
           </button>
           <a
             href="/costo"
-            className="inline-flex items-center justify-center rounded-md border border-hairline bg-white px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface"
+            className="inline-flex items-center justify-center rounded-full border border-hairline bg-white px-5 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface"
           >
             Vai al check-up
           </a>
@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" },
     ],
   }),
   shellComponent: RootShell,

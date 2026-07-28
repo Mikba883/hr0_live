@@ -77,10 +77,14 @@ function HrEsternoPage() {
       </AnnouncementBar>
 
       {/* Hero */}
-      <section id="hero" className="px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
-        <div className="mx-auto max-w-5xl text-center">
+      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(107,33,255,0.08),transparent_65%)]"
+        />
+        <div className="relative mx-auto max-w-5xl text-center">
           <Eyebrow>Direzione HR esterna per PMI</Eyebrow>
-          <h1 className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl text-ink">
+          <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[68px] text-ink">
             Una direzione HR in azienda,{" "}
             <span className="text-brand">4-8 giornate al mese</span>. Senza assumere un HR manager.
           </h1>
@@ -91,7 +95,7 @@ function HrEsternoPage() {
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
             <CtaButton href="/check-up">Verifica se fa per te — call gratuita di 30 min →</CtaButton>
-            <p className="text-xs uppercase tracking-widest text-ink-soft">
+            <p className="text-sm text-ink-soft">
               Dimensioniamo insieme · Nessun impegno · Onesto anche se non ti serve
             </p>
           </div>
@@ -124,7 +128,7 @@ function HrEsternoPage() {
                   <td className="p-4 font-semibold text-ink">{r.label}</td>
                   <td className="p-4 text-ink-soft">{r.a}</td>
                   <td className="p-4 text-ink-soft">{r.b}</td>
-                  <td className="p-4 text-ink border-l-2 border-brand bg-info-bg/40">{r.c}</td>
+                  <td className="p-4 text-base font-medium text-ink border-l-2 border-brand bg-info-bg">{r.c}</td>
                 </tr>
               ))}
             </tbody>
@@ -145,7 +149,7 @@ function HrEsternoPage() {
               }`}
             >
               <div className="mb-3 flex items-center gap-2">
-                <h3 className="font-display text-base uppercase tracking-tight text-ink">
+                <h3 className="text-base tracking-tight text-ink">
                   {col.title}
                 </h3>
                 {col.highlight && (
@@ -200,7 +204,7 @@ function HrEsternoPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-lg font-semibold text-white">
                 {t.n}
               </div>
-              <h3 className="mb-2 font-display text-base uppercase tracking-tight text-ink">
+              <h3 className="mb-2 text-base tracking-tight text-ink">
                 {t.t}
               </h3>
               <p className="text-sm text-ink-soft">{t.d}</p>
@@ -221,12 +225,15 @@ function HrEsternoPage() {
       <Section>
         <H2>La persona che entrerà nella tua azienda</H2>
         <div className="mt-10 grid gap-8 md:grid-cols-[240px_1fr] md:items-start">
-          <img
-            src="/Photo.png"
-            alt="Michele Baroni, consulente HR per PMI"
-            loading="lazy"
-            className="mx-auto aspect-square w-full max-w-[240px] rounded-2xl object-cover"
-          />
+          <div className="relative mx-auto w-full max-w-[240px]">
+            <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
+            <img
+              src="/Photo.png"
+              alt="Michele Baroni, consulente HR per PMI"
+              loading="lazy"
+              className="relative aspect-square w-full rounded-2xl object-cover"
+            />
+          </div>
           <div className="space-y-4 text-lg text-ink-soft">
             <p>
               Mi chiamo <span className="font-semibold text-ink">Michele Baroni</span>.
@@ -271,10 +278,10 @@ function HrEsternoPage() {
       </Section>
 
       {/* CTA finale */}
-      <Section>
+      <Section className="bg-ink">
         <div className="mx-auto max-w-2xl text-center">
-          <H2>Prima capiamo se e quanto ti serve. Poi parliamo di numeri.</H2>
-          <p className="mt-4 text-lg text-ink-soft">
+          <H2 className="text-white">Prima capiamo se e quanto ti serve. Poi parliamo di numeri.</H2>
+          <p className="mt-4 text-lg text-white/70">
             30 minuti di call: analizziamo la tua situazione, definiamo le
             priorità e ti dico quante giornate servirebbero davvero — anche se
             la risposta è "poche" o "nessuna".
@@ -282,7 +289,7 @@ function HrEsternoPage() {
         </div>
         <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
           <CtaButton href="/check-up">Prenota la call di dimensionamento →</CtaButton>
-          <p className="text-xs uppercase tracking-widest text-ink-soft">
+          <p className="text-sm text-white/60">
             2 minuti di survey · Ti richiamo entro 48 ore
           </p>
         </div>

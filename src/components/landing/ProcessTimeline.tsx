@@ -12,7 +12,7 @@ export function ProcessTimeline() {
     <ol className="relative space-y-6 border-l-2 border-hairline pl-8">
       {steps.map((s, i) => (
         <li key={i} className="relative">
-          <span className="absolute -left-[41px] flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
+          <span className="display absolute -left-[41px] flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm text-white">
             {i + 1}
           </span>
           <p className="text-lg font-semibold text-ink">{s}</p>

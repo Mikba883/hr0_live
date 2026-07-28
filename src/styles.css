@@ -20,14 +20,14 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo Black", "Inter", system-ui, sans-serif;
+  --font-display: "Archivo", "Inter", system-ui, sans-serif;
   --color-brand: #6B21FF;
   --color-brand-dark: #4C13BD;
   --color-danger: #E11D48;
   --color-ink: #0B1220;
   --color-ink-soft: #4B5563;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #F6F5F1;
+  --color-surface: #F6F5F1;
+  --color-surface-alt: #FFFFFF;
   --color-hairline: #E5E7EB;
   --color-info-bg: #F3EEFF;
 }
@@ -168,15 +168,48 @@
   h1, h2, h3 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
-    line-height: 1.02;
-    text-transform: uppercase;
+    line-height: 1.08;
+  }
+
+  h1 {
+    font-weight: 800;
+  }
+
+  h2, h3 {
+    font-weight: 700;
   }
 }
 
 @utility display {
   font-family: var(--font-display);
-  text-transform: uppercase;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.02;
+  line-height: 1.08;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

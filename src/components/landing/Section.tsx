@@ -16,9 +16,15 @@ export function Section({
   );
 }
 
-export function H2({ children }: { children: ReactNode }) {
+export function H2({
+  children,
+  className = "text-ink",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <h2 className="text-[34px] sm:text-5xl md:text-6xl font-normal text-ink">
+    <h2 className={`text-[30px] leading-[1.1] sm:text-[40px] ${className}`}>
       {children}
     </h2>
   );

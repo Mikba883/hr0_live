@@ -22,7 +22,7 @@ export function StickyMobileCta({ heroId = "hero" }: { heroId?: string }) {
     >
       <a
         href="/check-up"
-        className="block w-full rounded-md bg-brand px-4 py-3 text-center text-base font-semibold text-white"
+        className="block w-full rounded-full bg-brand px-4 py-3 text-center text-base font-semibold text-white"
       >
         Prenota il check-up gratuito
       </a>

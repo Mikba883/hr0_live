@@ -64,10 +64,14 @@ function MetodoPage() {
       </AnnouncementBar>
 
       {/* Hero */}
-      <section id="hero" className="px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
-        <div className="mx-auto max-w-5xl text-center">
+      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(107,33,255,0.08),transparent_65%)]"
+        />
+        <div className="relative mx-auto max-w-5xl text-center">
           <Eyebrow>Per PMI che vogliono smettere di dipendere dalle agenzie</Eyebrow>
-          <h1 className="text-[44px] leading-[0.95] sm:text-7xl md:text-8xl text-ink">
+          <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[68px] text-ink">
             Assumere bene non è un talento.{" "}
             <span className="text-brand">È un processo.</span>
           </h1>
@@ -78,7 +82,7 @@ function MetodoPage() {
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
             <CtaButton href="/check-up">Scopri il metodo →</CtaButton>
-            <p className="text-xs uppercase tracking-widest text-ink-soft">
+            <p className="text-sm text-ink-soft">
               30 min · Nessun impegno · Ti dico se fa per te
             </p>
           </div>
@@ -100,18 +104,47 @@ function MetodoPage() {
 
       {/* La quarta via */}
       <Section>
-        <H2>Impari il metodo sulla tua posizione aperta. Vera.</H2>
-        <div className="mt-6 max-w-3xl space-y-4 text-lg text-ink-soft">
-          <p>
-            Nessun caso di studio finto. Prendiamo una posizione che devi
-            coprire davvero, adesso, e la lavoriamo insieme a una persona della
-            tua azienda — un office manager, un'assistente di direzione,
-            chiunque abbia voglia di imparare.
-          </p>
-          <p>
-            Schema semplice: prima faccio io e tu osservi. Poi facciamo insieme.
-            Poi fai tu e io correggo. Alla fine:
-          </p>
+        <div className="grid gap-10 md:grid-cols-[3fr_2fr] md:items-center">
+          <div>
+            <H2>Impari il metodo sulla tua posizione aperta. Vera.</H2>
+            <div className="mt-6 space-y-4 text-lg text-ink-soft">
+              <p>
+                Nessun caso di studio finto. Prendiamo una posizione che devi
+                coprire davvero, adesso, e la lavoriamo insieme a una persona della
+                tua azienda — un office manager, un'assistente di direzione,
+                chiunque abbia voglia di imparare.
+              </p>
+              <p>
+                Schema semplice: prima faccio io e tu osservi. Poi facciamo insieme.
+                Poi fai tu e io correggo. Alla fine:
+              </p>
+            </div>
+          </div>
+          <div className="relative mx-auto w-full max-w-sm">
+            <div className="absolute -inset-3 -rotate-2 rounded-2xl bg-info-bg" aria-hidden />
+            <div className="relative rounded-2xl border border-hairline bg-white p-7">
+              <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+                Scorecard colloquio · esempio
+              </p>
+              <ul className="mt-5 space-y-4 text-sm">
+                {[
+                  { c: "Competenze tecniche", v: "4/5" },
+                  { c: "Esperienza sul ruolo", v: "3/5" },
+                  { c: "Autonomia e organizzazione", v: "5/5" },
+                  { c: "Allineamento con il team", v: "4/5" },
+                ].map((r) => (
+                  <li key={r.c} className="flex items-center justify-between gap-4">
+                    <span className="text-ink-soft">{r.c}</span>
+                    <span className="display text-lg text-brand">{r.v}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 flex items-center justify-between border-t border-hairline pt-4">
+                <span className="text-sm font-semibold text-ink">Valutazione oggettiva</span>
+                <span className="display text-2xl text-brand">16/20</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {risultati.map((r) => (
@@ -143,7 +176,7 @@ function MetodoPage() {
             formazione della tua persona te la copre in gran parte il fondo.
           </p>
         </div>
-        <div className="mt-8 flex items-start gap-4 rounded-lg border border-brand/30 bg-info-bg p-6">
+        <div className="mt-8 flex items-start gap-4 rounded-2xl border border-brand/30 bg-info-bg p-6">
           <Lightbulb className="mt-1 h-6 w-6 shrink-0 text-brand" />
           <p className="text-base text-ink">
             Nel check-up verifichiamo insieme, in 5 minuti, se la tua azienda ha
@@ -156,7 +189,7 @@ function MetodoPage() {
       <Section>
         <H2>Parliamoci chiaro</H2>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <div className="rounded-lg border border-hairline bg-white p-6">
+          <div className="rounded-2xl border border-hairline bg-white p-6">
             <h3 className="mb-4 text-lg font-semibold text-ink">✅ Fa per te se:</h3>
             <ul className="space-y-3">
               {perChi.map((v) => (
@@ -167,7 +200,7 @@ function MetodoPage() {
               ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-hairline bg-white p-6">
+          <div className="rounded-2xl border border-hairline bg-white p-6">
             <h3 className="mb-4 text-lg font-semibold text-ink">❌ NON fa per te se:</h3>
             <ul className="space-y-3">
               {nonPerChi.map((v) => (
@@ -190,10 +223,10 @@ function MetodoPage() {
       </Section>
 
       {/* CTA finale */}
-      <Section>
+      <Section className="bg-ink">
         <div className="mx-auto max-w-2xl text-center">
-          <H2>Il primo passo è capire se ha senso. Gratis.</H2>
-          <p className="mt-4 text-lg text-ink-soft">
+          <H2 className="text-white">Il primo passo è capire se ha senso. Gratis.</H2>
+          <p className="mt-4 text-lg text-white/70">
             30 minuti di check-up: analizziamo come assumi oggi, ti mostro come
             funzionerebbe il metodo sulla tua posizione aperta, e verifichiamo
             se puoi accedere ai fondi. Poi decidi tu.
@@ -201,7 +234,7 @@ function MetodoPage() {
         </div>
         <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
           <CtaButton href="/check-up">Prenota il tuo check-up gratuito →</CtaButton>
-          <p className="text-xs uppercase tracking-widest text-ink-soft">
+          <p className="text-sm text-white/60">
             2 minuti di survey · Ti richiamo entro 48 ore
           </p>
         </div>

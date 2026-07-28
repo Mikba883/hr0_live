@@ -356,9 +356,16 @@ function CheckUpPage() {
             {safeIndex + 1} / {total}
           </span>
         </div>
-        <div className="h-1 w-full bg-hairline">
+        <div
+          className="h-2 w-full bg-hairline"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={total}
+          aria-valuenow={safeIndex + 1}
+          aria-label="Avanzamento del check-up"
+        >
           <div
-            className="h-full bg-brand transition-all duration-300"
+            className="h-full rounded-r-full bg-brand transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -377,7 +384,7 @@ function CheckUpPage() {
         )}
 
         {error && (
-          <div className="mt-6 rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
+          <div className="mt-6 rounded-xl border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -487,7 +494,7 @@ function QuestionCard({
             onChange={(e) => set(q.key, e.target.value as never)}
             rows={4}
             placeholder={q.placeholder}
-            className="w-full rounded-lg border border-hairline bg-white px-4 py-3 text-base outline-none transition-colors focus:border-brand"
+            className="w-full rounded-xl border border-hairline bg-white px-4 py-3 text-base outline-none transition-colors focus:border-brand"
           />
         )}
 
@@ -509,7 +516,7 @@ function QuestionCard({
 
         {q.type === "consent" && (
           <div className="space-y-4">
-            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-hairline bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-white p-4">
               <input
                 type="checkbox"
                 checked={state.consenso}
@@ -560,7 +567,7 @@ function ChoiceList({
             }`}
           >
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs font-bold transition-colors ${
                 selected
                   ? "border-brand bg-brand text-white"
                   : "border-hairline bg-surface text-ink-soft group-hover:border-brand group-hover:text-brand"
