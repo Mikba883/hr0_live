@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MetodoRouteImport } from './routes/metodo'
 import { Route as HrEsternoRouteImport } from './routes/hr-esterno'
+import { Route as GrazieRouteImport } from './routes/grazie'
 import { Route as CostoRouteImport } from './routes/costo'
 import { Route as CookieRouteImport } from './routes/cookie'
+import { Route as CheckUpRouteImport } from './routes/check-up'
 import { Route as IndexRouteImport } from './routes/index'
 
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -31,6 +33,11 @@ const HrEsternoRoute = HrEsternoRouteImport.update({
   path: '/hr-esterno',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GrazieRoute = GrazieRouteImport.update({
+  id: '/grazie',
+  path: '/grazie',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CostoRoute = CostoRouteImport.update({
   id: '/costo',
   path: '/costo',
@@ -41,6 +48,11 @@ const CookieRoute = CookieRouteImport.update({
   path: '/cookie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckUpRoute = CheckUpRouteImport.update({
+  id: '/check-up',
+  path: '/check-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,16 +61,20 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/grazie': typeof GrazieRoute
   '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/grazie': typeof GrazieRoute
   '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
@@ -66,22 +82,42 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
+  '/grazie': typeof GrazieRoute
   '/hr-esterno': typeof HrEsternoRoute
   '/metodo': typeof MetodoRoute
   '/privacy': typeof PrivacyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cookie' | '/costo' | '/hr-esterno' | '/metodo' | '/privacy'
+  fullPaths:
+    | '/'
+    | '/check-up'
+    | '/cookie'
+    | '/costo'
+    | '/grazie'
+    | '/hr-esterno'
+    | '/metodo'
+    | '/privacy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cookie' | '/costo' | '/hr-esterno' | '/metodo' | '/privacy'
+  to:
+    | '/'
+    | '/check-up'
+    | '/cookie'
+    | '/costo'
+    | '/grazie'
+    | '/hr-esterno'
+    | '/metodo'
+    | '/privacy'
   id:
     | '__root__'
     | '/'
+    | '/check-up'
     | '/cookie'
     | '/costo'
+    | '/grazie'
     | '/hr-esterno'
     | '/metodo'
     | '/privacy'
@@ -89,8 +125,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CheckUpRoute: typeof CheckUpRoute
   CookieRoute: typeof CookieRoute
   CostoRoute: typeof CostoRoute
+  GrazieRoute: typeof GrazieRoute
   HrEsternoRoute: typeof HrEsternoRoute
   MetodoRoute: typeof MetodoRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -119,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrEsternoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/grazie': {
+      id: '/grazie'
+      path: '/grazie'
+      fullPath: '/grazie'
+      preLoaderRoute: typeof GrazieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/costo': {
       id: '/costo'
       path: '/costo'
@@ -133,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CookieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/check-up': {
+      id: '/check-up'
+      path: '/check-up'
+      fullPath: '/check-up'
+      preLoaderRoute: typeof CheckUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -145,8 +197,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CheckUpRoute: CheckUpRoute,
   CookieRoute: CookieRoute,
   CostoRoute: CostoRoute,
+  GrazieRoute: GrazieRoute,
   HrEsternoRoute: HrEsternoRoute,
   MetodoRoute: MetodoRoute,
   PrivacyRoute: PrivacyRoute,
@@ -154,13 +208,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
