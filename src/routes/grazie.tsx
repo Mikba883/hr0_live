@@ -45,7 +45,7 @@ function GraziePage() {
           per fissare l'appuntamento del check-up.
         </p>
 
-        <div className="mt-10 rounded-lg border border-hairline bg-white p-6 text-left">
+        <div className="mt-10 rounded-2xl border border-hairline bg-white p-6 text-left">
           <p className="text-sm font-semibold uppercase tracking-widest text-ink-soft">
             Cosa succede ora
           </p>

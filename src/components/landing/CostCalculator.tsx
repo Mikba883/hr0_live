@@ -57,7 +57,7 @@ export function CostCalculator() {
   }, [ral, mesi, sbagliate, giorni]);
 
   return (
-    <div id="calcolatore" className="rounded-xl border border-hairline bg-white p-6 sm:p-10">
+    <div id="calcolatore" className="rounded-2xl border border-hairline bg-white p-6 sm:p-10">
       <div className="grid gap-8 md:grid-cols-2">
         <div className="space-y-6">
           <Slider
@@ -95,14 +95,11 @@ export function CostCalculator() {
           />
         </div>
 
-        <div className="flex flex-col justify-center rounded-lg bg-surface p-6 text-center">
+        <div className="flex flex-col justify-center rounded-2xl bg-surface p-6 text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-ink-soft">
             Costo nascosto annuo
           </p>
-          <p
-            className="mt-2 font-semibold text-danger"
-            style={{ fontSize: "56px", lineHeight: 1.05 }}
-          >
+          <p className="display mt-2 text-[56px] leading-[1.05] font-extrabold text-danger sm:text-[72px]">
             {eur(totale)}
           </p>
           <div className="mt-6 space-y-1 text-left text-sm text-ink-soft">
@@ -116,7 +113,7 @@ export function CostCalculator() {
           </p>
           <a
             href="/check-up"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Voglio capire come ridurlo →
           </a>
