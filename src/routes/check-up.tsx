@@ -133,7 +133,7 @@ const questions: Question[] = [
     type: "choice",
     intro: "La tua azienda",
     label: "Quanti siete in azienda?",
-    options: ["1-10", "11-50", "51-100", "Oltre 100"],
+    options: ["1-10", "11-25", "26-50", "51-100", "Oltre 100"],
   },
   {
     key: "settore",
@@ -226,13 +226,6 @@ const questions: Question[] = [
     intro: "Ultime due cose",
     label: "C'è qualcosa di specifico che vorresti capire durante il check-up?",
     placeholder: "Scrivi qui, anche due righe. (facoltativo)",
-    optional: true,
-  },
-  {
-    key: "orario_preferito",
-    type: "choice",
-    label: "Quando preferisci essere ricontattato?",
-    options: ["Mattina", "Pausa pranzo", "Pomeriggio", "Indifferente"],
     optional: true,
   },
   {
