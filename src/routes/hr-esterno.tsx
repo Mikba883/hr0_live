@@ -63,8 +63,8 @@ const faq = [
 ];
 
 const bioBadges: string[] = [
-  "8+ anni in HR, selezione e organizzazione",
-  "Selezioni gestite per Bain & Company e grandi aziende",
+  "11+ anni in HR, selezione e organizzazione",
+  "Collaborato con +24 realtà aziendali",
   "Garanzia di sostituzione su ogni inserimento",
 ];
 
