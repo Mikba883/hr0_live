@@ -53,7 +53,7 @@ function CostoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Solo 4 check-up gratuiti a settimana ·{" "}
-        <a href="#form" className="text-brand underline underline-offset-2">Prenota il tuo posto</a>
+        <a href="/check-up" className="text-brand underline underline-offset-2">Prenota il tuo posto</a>
       </AnnouncementBar>
 
       {/* Hero */}

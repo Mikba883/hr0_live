@@ -61,7 +61,7 @@ function MetodoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Costruisci il metodo di assunzione dentro la tua azienda ·{" "}
-        <a href="#form" className="text-brand underline underline-offset-2">Check-up gratis</a>
+        <a href="/check-up" className="text-brand underline underline-offset-2">Check-up gratis</a>
       </AnnouncementBar>
 
       {/* Hero */}
@@ -78,7 +78,7 @@ function MetodoPage() {
             prima posizione vera che devi coprire.
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="#form">Scopri il metodo →</CtaButton>
+            <CtaButton href="/check-up">Scopri il metodo →</CtaButton>
             <p className="text-xs uppercase tracking-widest text-ink-soft">
               30 min · Nessun impegno · Ti dico se fa per te
             </p>

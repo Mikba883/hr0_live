@@ -115,7 +115,7 @@ export function CostCalculator() {
             clienti persi, gli errori di chi copre due ruoli, il morale del team.
           </p>
           <a
-            href="#form"
+            href="/check-up"
             className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
           >
             Voglio capire come ridurlo →

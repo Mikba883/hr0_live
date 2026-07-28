@@ -68,7 +68,7 @@ function HrEsternoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Direzione HR esterna a giornate ·{" "}
-        <a href="#form" className="text-brand underline underline-offset-2">Call gratuita di dimensionamento</a>
+        <a href="/check-up" className="text-brand underline underline-offset-2">Call gratuita di dimensionamento</a>
       </AnnouncementBar>
 
       {/* Hero */}
@@ -85,7 +85,7 @@ function HrEsternoPage() {
             a fare l'imprenditore, io mi occupo delle persone.
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="#form">Verifica se fa per te — call gratuita di 30 min →</CtaButton>
+            <CtaButton href="/check-up">Verifica se fa per te — call gratuita di 30 min →</CtaButton>
             <p className="text-xs uppercase tracking-widest text-ink-soft">
               Dimensioniamo insieme · Nessun impegno · Onesto anche se non ti serve
             </p>
