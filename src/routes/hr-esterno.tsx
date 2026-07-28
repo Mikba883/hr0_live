@@ -268,8 +268,11 @@ function HrEsternoPage() {
             la risposta è "poche" o "nessuna".
           </p>
         </div>
-        <div className="mx-auto mt-10 max-w-xl">
-          <LeadForm ctaLabel="Prenota la call di dimensionamento →" />
+        <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
+          <CtaButton href="/check-up">Prenota la call di dimensionamento →</CtaButton>
+          <p className="text-xs uppercase tracking-widest text-ink-soft">
+            2 minuti di survey · Ti richiamo entro 48 ore
+          </p>
         </div>
       </Section>
 
