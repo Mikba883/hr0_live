@@ -44,7 +44,6 @@ type State = {
   chi_se_ne_occupa: string;
   frustrazione: string;
   obiettivo_call: string;
-  orario_preferito: string;
   consenso: boolean;
 };
 
@@ -66,7 +65,6 @@ const initial: State = {
   chi_se_ne_occupa: "",
   frustrazione: "",
   obiettivo_call: "",
-  orario_preferito: "",
   consenso: false,
 };
 
