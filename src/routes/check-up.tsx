@@ -567,26 +567,28 @@ function PillGroup({
   value,
   onChange,
   multi = false,
-  optional = false,
-  hint,
-}: {
+type PillGroupProps = {
   label: string;
   options: string[];
-  value: string | string[];
-  onChange: (v: string | string[]) => void;
-  multi?: boolean;
   optional?: boolean;
   hint?: string;
-}) {
+} & (
+  | { multi?: false; value: string; onChange: (v: string) => void }
+  | { multi: true; value: string[]; onChange: (v: string[]) => void }
+);
+
+function PillGroup(props: PillGroupProps) {
+  const { label, options, optional = false, hint } = props;
+
   const isSelected = (opt: string) =>
-    multi ? (value as string[]).includes(opt) : value === opt;
+    props.multi ? props.value.includes(opt) : props.value === opt;
 
   const toggle = (opt: string) => {
-    if (multi) {
-      const arr = value as string[];
-      onChange(arr.includes(opt) ? arr.filter((x) => x !== opt) : [...arr, opt]);
+    if (props.multi) {
+      const arr = props.value;
+      props.onChange(arr.includes(opt) ? arr.filter((x) => x !== opt) : [...arr, opt]);
     } else {
-      onChange(opt);
+      props.onChange(opt);
     }
   };
 
