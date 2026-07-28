@@ -63,8 +63,8 @@ const faq = [
 ];
 
 const bioBadges: string[] = [
-  "8+ anni in HR, selezione e organizzazione",
-  "Selezioni gestite per Bain & Company e grandi aziende",
+  "11+ anni in HR, selezione e organizzazione",
+  "Collaborato con +24 realtà aziendali",
   "Garanzia di sostituzione su ogni inserimento",
 ];
 
@@ -230,7 +230,7 @@ function HrEsternoPage() {
           <div className="space-y-4 text-lg text-ink-soft">
             <p>
               Mi chiamo <span className="font-semibold text-ink">Michele Baroni</span>.
-              Mi occupo di persone e organizzazione da oltre 8 anni: ho iniziato
+              Mi occupo di persone e organizzazione da oltre 11 anni: ho iniziato
               in <span className="font-semibold text-ink">Accenture</span> come
               consulente Talent & Organization, dove ho lavorato su selezione e
               sviluppo per grandi aziende, e oggi gestisco ricerche di personale
