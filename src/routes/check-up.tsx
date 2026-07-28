@@ -459,7 +459,7 @@ function QuestionCard({
         {(q.type === "text" || q.type === "email" || q.type === "tel") && (
           <>
             <input
-              ref={(el) => (inputRef.current = el)}
+              ref={(el) => { inputRef.current = el; }}
               type={q.type}
               value={state[q.key] as string}
               onChange={(e) => set(q.key, e.target.value as never)}
@@ -482,7 +482,7 @@ function QuestionCard({
 
         {q.type === "textarea" && (
           <textarea
-            ref={(el) => (inputRef.current = el)}
+            ref={(el) => { inputRef.current = el; }}
             value={state[q.key] as string}
             onChange={(e) => set(q.key, e.target.value as never)}
             rows={4}
