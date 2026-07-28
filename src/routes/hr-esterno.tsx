@@ -62,6 +62,12 @@ const faq = [
   { q: "Sei tu fisicamente o mandi qualcuno?", a: "Sono io. È il motivo per cui prendo poche aziende in parallelo." },
 ];
 
+const bioBadges: string[] = [
+  "8+ anni in HR, selezione e organizzazione",
+  "Selezioni gestite per Bain & Company e grandi aziende",
+  "Garanzia di sostituzione su ogni inserimento",
+];
+
 function HrEsternoPage() {
   return (
     <main className="bg-surface pb-24 md:pb-0">
