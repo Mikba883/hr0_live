@@ -86,7 +86,8 @@ function HrEsternoPage() {
           <Eyebrow>Direzione HR esterna per PMI</Eyebrow>
           <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[68px] text-ink">
             Una direzione HR in azienda,{" "}
-            <span className="text-brand">4-8 giornate al mese</span>. Senza assumere un HR manager.
+            <span className="text-brand">4-8 giornate al mese</span>. Senza il costo fisso di un manager.
+            Senza il rischio dell'assunzione sbagliata — se se ne va entro 6 mesi, la ricerca la rifaccio gratis.
           </h1>
           <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
             Selezione, onboarding, formazione, processi: entro nella tua azienda
