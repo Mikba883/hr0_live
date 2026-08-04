@@ -109,8 +109,9 @@ function CostoPage() {
                 ricomincia da capo, con la ricerca da rifare e la formazione buttata.
               </p>
               <p>
-                Le agenzie? Ti chiedono il 20-25% della RAL per mandarti mucchi di
-                CV. E alla prossima ricerca, ripaghi da capo.
+                L'agenzia ti chiede il 25% della RAL per tre CV presi da
+                LinkedIn. Io ti chiudo il ruolo — e ti lascio il metodo per non
+                richiamarla mai più.
               </p>
             </div>
           </div>
