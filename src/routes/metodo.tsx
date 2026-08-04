@@ -72,8 +72,8 @@ function MetodoPage() {
         <div className="relative mx-auto max-w-5xl text-center">
           <Eyebrow>Per PMI che vogliono smettere di dipendere dalle agenzie</Eyebrow>
           <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[68px] text-ink">
-            Assumere bene non è un talento.{" "}
-            <span className="text-brand">È un processo.</span>
+            Trovare personale non è questione di{" "}
+            <span className="text-brand">fortuna.</span>
           </h1>
           <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
             Le agenzie ti chiedono il 20-25% della RAL a ogni ricerca, per sempre.
