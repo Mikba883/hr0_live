@@ -16,6 +16,7 @@ import { Route as GrazieRouteImport } from './routes/grazie'
 import { Route as CostoRouteImport } from './routes/costo'
 import { Route as CookieRouteImport } from './routes/cookie'
 import { Route as CheckUpRouteImport } from './routes/check-up'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -53,6 +54,11 @@ const CheckUpRoute = CheckUpRouteImport.update({
   path: '/check-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,6 +67,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/check-up': typeof CheckUpRoute
   '/cookie': typeof CookieRoute
   '/costo': typeof CostoRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/check-up'
     | '/cookie'
     | '/costo'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/check-up'
     | '/cookie'
     | '/costo'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/check-up'
     | '/cookie'
     | '/costo'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   CheckUpRoute: typeof CheckUpRoute
   CookieRoute: typeof CookieRoute
   CostoRoute: typeof CostoRoute
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   CheckUpRoute: CheckUpRoute,
   CookieRoute: CookieRoute,
   CostoRoute: CostoRoute,

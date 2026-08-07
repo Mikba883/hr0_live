@@ -120,7 +120,7 @@ colonne. Poi apri `/check-up` sul sito, compila il form fino in fondo: se ti por
 pagina `/grazie` senza errori, la riga è salvata. Torna sul Table Editor e premi
 **Refresh**: la vedi in cima.
 
-Se invece compare il messaggio *"Non sono riuscito a salvare le tue risposte"*, la
+Se invece compare il messaggio _"Non sono riuscito a salvare le tue risposte"_, la
 scrittura è fallita — apri la console del browser (F12), l'errore esatto di Supabase è
 loggato lì.
 
