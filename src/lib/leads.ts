@@ -6,7 +6,12 @@
  * restare leggibili senza aprire il markup.
  */
 
-export type Stato = "nuovo" | "contattato" | "fissato" | "cliente" | "perso";
+export type Stato = "nuovo" | "contattato" | "fissato" | "vinto" | "perso";
+
+/** Gli stati ancora in gioco: non vinti, non persi. */
+export const STATI_APERTI: Stato[] = ["nuovo", "contattato", "fissato"];
+
+export const eChiuso = (stato: Stato) => stato === "vinto" || stato === "perso";
 
 export type Lead = {
   id: string;
@@ -35,6 +40,12 @@ export type Lead = {
   stato: Stato;
   note: string | null;
   contattato_at: string | null;
+  /** Perché l'hai perso. Valorizzato solo quando stato = "perso". */
+  motivo_perdita: string | null;
+  /** Data (YYYY-MM-DD) del prossimo passo che ti sei segnato. */
+  prossimo_contatto: string | null;
+  /** Quando è finito in "vinto" o "perso". */
+  chiuso_at: string | null;
 };
 
 export const STATI: { value: Stato; label: string; dot: string; chip: string }[] = [
@@ -52,12 +63,27 @@ export const STATI: { value: Stato; label: string; dot: string; chip: string }[]
     chip: "bg-sky-50 text-sky-700",
   },
   {
-    value: "cliente",
-    label: "Cliente",
+    value: "vinto",
+    label: "Vinto",
     dot: "bg-emerald-500",
     chip: "bg-emerald-50 text-emerald-700",
   },
   { value: "perso", label: "Perso", dot: "bg-ink-soft/40", chip: "bg-hairline text-ink-soft" },
+];
+
+/**
+ * Perché un lead si perde. Chiederlo al momento della chiusura è l'unica
+ * differenza fra un archivio di lead morti e un dato che ti dice dove stai
+ * perdendo: senza questo campo, "perso" non insegna niente.
+ */
+export const MOTIVI_PERDITA = [
+  "Non risponde più",
+  "Non era in target",
+  "Budget insufficiente",
+  "Ha scelto un concorrente",
+  "Tempi non compatibili",
+  "Ha risolto internamente",
+  "Altro",
 ];
 
 export const statoInfo = (stato: Stato) => STATI.find((s) => s.value === stato) ?? STATI[0];
@@ -102,22 +128,95 @@ export function priorita(lead: Lead): Priorita {
   return { score, label: "Bassa", chip: "bg-hairline text-ink-soft" };
 }
 
+// -------------------- follow-up --------------------
+
+/** Oggi in formato YYYY-MM-DD, per confrontarlo con le colonne `date`. */
+export function oggiISO(): string {
+  const d = new Date();
+  const mese = String(d.getMonth() + 1).padStart(2, "0");
+  const giorno = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mese}-${giorno}`;
+}
+
+export type Followup = "nessuno" | "futuro" | "oggi" | "ritardo";
+
+/**
+ * Un lead aperto con la data del prossimo passo già scaduta è il modo tipico
+ * di perdere una trattativa senza accorgersene: lo distinguiamo da quelli
+ * ancora in tempo per poterlo mostrare in rosso.
+ */
+export function followup(lead: Lead): Followup {
+  if (!lead.prossimo_contatto || eChiuso(lead.stato)) return "nessuno";
+  const oggi = oggiISO();
+  if (lead.prossimo_contatto < oggi) return "ritardo";
+  if (lead.prossimo_contatto === oggi) return "oggi";
+  return "futuro";
+}
+
+// -------------------- periodo --------------------
+
+export type Periodo = "tutti" | "oggi" | "7g" | "30g" | "90g" | "custom";
+
+export const PERIODI: { value: Periodo; label: string }[] = [
+  { value: "tutti", label: "Sempre" },
+  { value: "oggi", label: "Oggi" },
+  { value: "7g", label: "7 giorni" },
+  { value: "30g", label: "30 giorni" },
+  { value: "90g", label: "90 giorni" },
+  { value: "custom", label: "Date scelte" },
+];
+
+const GIORNI: Partial<Record<Periodo, number>> = { oggi: 1, "7g": 7, "30g": 30, "90g": 90 };
+
+/**
+ * Filtra per data di arrivo del lead. `da` e `a` (YYYY-MM-DD) valgono solo con
+ * periodo "custom"; `a` è inclusivo, cioè comprende tutta la giornata indicata.
+ */
+export function nelPeriodo(lead: Lead, periodo: Periodo, da?: string, a?: string): boolean {
+  if (periodo === "tutti") return true;
+
+  if (periodo === "custom") {
+    const giorno = lead.created_at.slice(0, 10);
+    if (da && giorno < da) return false;
+    if (a && giorno > a) return false;
+    return true;
+  }
+
+  const giorni = GIORNI[periodo];
+  if (!giorni) return true;
+  const inizio = new Date();
+  inizio.setHours(0, 0, 0, 0);
+  inizio.setDate(inizio.getDate() - (giorni - 1));
+  return new Date(lead.created_at).getTime() >= inizio.getTime();
+}
+
 // -------------------- fotografia d'insieme --------------------
 
 export type Riepilogo = {
   totale: number;
-  daContattare: number;
-  settimana: number;
-  caldi: number;
+  inPipeline: number;
+  daRichiamare: number;
+  vinti: number;
+  persi: number;
+  /** Percentuale di trattative chiuse che hai vinto. null se non ne hai chiusa nessuna. */
+  conversione: number | null;
 };
 
 export function riepilogo(leads: Lead[]): Riepilogo {
-  const settimanaFa = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const vinti = leads.filter((l) => l.stato === "vinto").length;
+  const persi = leads.filter((l) => l.stato === "perso").length;
+  const chiusi = vinti + persi;
+
   return {
     totale: leads.length,
-    daContattare: leads.filter((l) => l.stato === "nuovo").length,
-    settimana: leads.filter((l) => new Date(l.created_at).getTime() >= settimanaFa).length,
-    caldi: leads.filter((l) => priorita(l).label === "Alta").length,
+    inPipeline: leads.filter((l) => !eChiuso(l.stato)).length,
+    daRichiamare: leads.filter((l) => {
+      const f = followup(l);
+      return f === "ritardo" || f === "oggi";
+    }).length,
+    vinti,
+    persi,
+    conversione: chiusi === 0 ? null : Math.round((vinti / chiusi) * 100),
   };
 }
 
@@ -131,10 +230,24 @@ export function cercaLead(lead: Lead, q: string): boolean {
     .some((campo) => String(campo).toLowerCase().includes(query));
 }
 
-export type Ordine = "recenti" | "priorita";
+export type Ordine = "recenti" | "priorita" | "followup";
 
 export function ordinaLead(leads: Lead[], ordine: Ordine): Lead[] {
   const copia = [...leads];
+
+  if (ordine === "followup") {
+    // Chi ha una data segnata viene prima, dal più scaduto in giù; chi non ha
+    // un prossimo passo finisce in fondo, ordinato per data di arrivo.
+    return copia.sort((a, b) => {
+      const da = a.prossimo_contatto;
+      const db = b.prossimo_contatto;
+      if (da && db) return da.localeCompare(db);
+      if (da) return -1;
+      if (db) return 1;
+      return b.created_at.localeCompare(a.created_at);
+    });
+  }
+
   if (ordine === "priorita") {
     return copia.sort((a, b) => {
       const diff = priorita(b).score - priorita(a).score;
@@ -154,6 +267,12 @@ export function dataEstesa(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** `2026-08-14` → `14/08/2026`. Per le colonne `date`, senza fuso orario di mezzo. */
+export function dataBreve(giorno: string): string {
+  const [anno, mese, gg] = giorno.slice(0, 10).split("-");
+  return `${gg}/${mese}/${anno}`;
 }
 
 export function daQuanto(iso: string): string {
@@ -200,6 +319,10 @@ const COLONNE: { key: keyof Lead | "priorita"; label: string }[] = [
   { key: "chi_se_ne_occupa", label: "Chi se ne occupa" },
   { key: "frustrazioni", label: "Frustrazioni" },
   { key: "obiettivo_call", label: "Obiettivo call" },
+  { key: "motivo_perdita", label: "Motivo perdita" },
+  { key: "prossimo_contatto", label: "Prossimo contatto" },
+  { key: "contattato_at", label: "Primo contatto" },
+  { key: "chiuso_at", label: "Chiuso il" },
   { key: "note", label: "Note" },
   { key: "source", label: "Provenienza" },
   { key: "utm", label: "Campagna" },
@@ -213,11 +336,14 @@ export function campagna(utm: Record<string, string> | null): string {
     .join(" · ");
 }
 
+const COLONNE_DATA_ORA = new Set(["created_at", "contattato_at", "chiuso_at"]);
+
 function cella(lead: Lead, key: (typeof COLONNE)[number]["key"]): string {
   if (key === "priorita") return priorita(lead).label;
   const valore = lead[key];
   if (valore == null) return "";
-  if (key === "created_at") return dataEstesa(String(valore));
+  if (COLONNE_DATA_ORA.has(key)) return dataEstesa(String(valore));
+  if (key === "prossimo_contatto") return dataBreve(String(valore));
   if (key === "utm") return campagna(valore as Record<string, string>);
   if (Array.isArray(valore)) return valore.join(" | ");
   if (typeof valore === "object") return JSON.stringify(valore);
