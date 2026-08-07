@@ -8,6 +8,7 @@ import { Footer } from "@/components/landing/Footer";
 import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
+import { VideoEmbed } from "@/components/landing/VideoEmbed";
 
 export const Route = createFileRoute("/metodo")({
   head: () => ({
@@ -89,8 +90,17 @@ function MetodoPage() {
         </div>
       </section>
 
+      {/* Video */}
+      <Section className="bg-white border-t border-hairline">
+        <H2 className="text-center">Guarda come funziona in 2 minuti</H2>
+        <div className="mt-8">
+          <VideoEmbed videoId="x2lul0gEWPE" title="Come funziona il metodo HR0" />
+        </div>
+      </Section>
+
       {/* Le 3 opzioni */}
       <Section className="bg-white border-t border-hairline">
+
         <H2>Le tue tre opzioni oggi (e perché nessuna ti convince)</H2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {opzioni.map((o) => (
