@@ -1,14 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type DragEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   AlertCircle,
   ArrowLeft,
   Building2,
-  CalendarClock,
+  CalendarDays,
   Check,
+  Clock,
   Download,
-  Flame,
   Inbox,
+  LayoutGrid,
+  List,
   Loader2,
   Lock,
   LogOut,
@@ -17,23 +27,34 @@ import {
   Phone,
   RefreshCw,
   Search,
-  Users,
+  TrendingUp,
+  Trophy,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   campagna,
   cercaLead,
   daQuanto,
+  dataBreve,
   dataEstesa,
+  eChiuso,
+  followup,
+  MOTIVI_PERDITA,
+  nelPeriodo,
+  oggiISO,
   ordinaLead,
+  PERIODI,
   priorita,
   riepilogo,
   scaricaCsv,
   STATI,
   statoInfo,
   telPulito,
+  type Followup,
   type Lead,
   type Ordine,
+  type Periodo,
   type Stato,
 } from "@/lib/leads";
 
@@ -229,14 +250,25 @@ function Login() {
 
 // -------------------- dashboard --------------------
 
+type Vista = "lista" | "pipeline";
+
+/** Chiusura in sospeso: il lead sta andando in "perso" e aspetta il motivo. */
+type Chiusura = { lead: Lead } | null;
+
 function Dashboard({ email }: { email: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
+
+  const [vista, setVista] = useState<Vista>("lista");
   const [q, setQ] = useState("");
   const [filtro, setFiltro] = useState<Stato | "tutti">("tutti");
   const [ordine, setOrdine] = useState<Ordine>("recenti");
+  const [periodo, setPeriodo] = useState<Periodo>("tutti");
+  const [da, setDa] = useState("");
+  const [a, setA] = useState("");
   const [selezionato, setSelezionato] = useState<string | null>(null);
+  const [chiusura, setChiusura] = useState<Chiusura>(null);
 
   const carica = useCallback(async () => {
     setCaricamento(true);
@@ -258,32 +290,91 @@ function Dashboard({ email }: { email: string }) {
     void carica();
   }, [carica]);
 
-  const aggiorna = async (id: string, patch: Partial<Lead>) => {
-    const precedenti = leads;
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
-    const { error } = await supabase.from("survey_responses").update(patch).eq("id", id);
-    if (error) {
-      console.error(error);
-      setLeads(precedenti);
-      setErrore("Modifica non salvata. Riprova.");
-    }
-  };
+  const aggiorna = useCallback(
+    async (id: string, patch: Partial<Lead>) => {
+      // Applichiamo subito in locale così l'interfaccia non aspetta la rete;
+      // se il salvataggio fallisce ricarichiamo dal database invece di
+      // ricostruire a mano lo stato precedente, che potrebbe non essere più
+      // quello giusto se nel frattempo è cambiato altro.
+      setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+      const { error } = await supabase.from("survey_responses").update(patch).eq("id", id);
+      if (error) {
+        console.error(error);
+        setErrore("Modifica non salvata. Riprova.");
+        void carica();
+      }
+    },
+    [carica],
+  );
 
-  const numeri = useMemo(() => riepilogo(leads), [leads]);
+  /**
+   * Unico punto in cui un lead cambia stato, da qualunque parte arrivi il
+   * comando (bottoni del dettaglio o trascinamento nella pipeline). Tiene
+   * allineati i campi che dipendono dallo stato invece di lasciarli indietro.
+   */
+  const cambiaStato = useCallback(
+    (lead: Lead, stato: Stato, motivo?: string) => {
+      if (stato === lead.stato && !motivo) return;
+
+      const patch: Partial<Lead> = { stato };
+      if (stato !== "nuovo" && !lead.contattato_at) {
+        patch.contattato_at = new Date().toISOString();
+      }
+      if (eChiuso(stato)) {
+        patch.chiuso_at = lead.chiuso_at ?? new Date().toISOString();
+        patch.prossimo_contatto = null; // una trattativa chiusa non si richiama
+        patch.motivo_perdita = stato === "perso" ? (motivo ?? null) : null;
+      } else {
+        // Riaperto: torna in gioco, quindi niente data di chiusura né motivo.
+        patch.chiuso_at = null;
+        patch.motivo_perdita = null;
+      }
+      void aggiorna(lead.id, patch);
+    },
+    [aggiorna],
+  );
+
+  /** In "perso" chiediamo prima il motivo; sugli altri stati si applica subito. */
+  const richiediStato = useCallback(
+    (lead: Lead, stato: Stato) => {
+      if (stato === "perso" && lead.stato !== "perso") setChiusura({ lead });
+      else cambiaStato(lead, stato);
+    },
+    [cambiaStato],
+  );
+
+  // Il periodo governa tutto: numeri in alto, liste e pipeline guardano
+  // sempre la stessa fetta di tempo, altrimenti i conti non tornerebbero.
+  const nelRange = useMemo(
+    () => leads.filter((l) => nelPeriodo(l, periodo, da, a)),
+    [leads, periodo, da, a],
+  );
+
+  const numeri = useMemo(() => riepilogo(nelRange), [nelRange]);
+
+  const cercati = useMemo(() => nelRange.filter((l) => cercaLead(l, q)), [nelRange, q]);
 
   const visibili = useMemo(() => {
-    const filtrati = leads.filter(
-      (l) => (filtro === "tutti" || l.stato === filtro) && cercaLead(l, q),
-    );
+    const filtrati = cercati.filter((l) => filtro === "tutti" || l.stato === filtro);
     return ordinaLead(filtrati, ordine);
-  }, [leads, filtro, q, ordine]);
+  }, [cercati, filtro, ordine]);
 
   const lead = leads.find((l) => l.id === selezionato) ?? null;
+
+  const dettaglio = lead ? (
+    <Dettaglio
+      key={lead.id}
+      lead={lead}
+      onChiudi={() => setSelezionato(null)}
+      onStato={(stato) => richiediStato(lead, stato)}
+      onAggiorna={(patch) => void aggiorna(lead.id, patch)}
+    />
+  ) : null;
 
   return (
     <main className="min-h-screen bg-surface">
       <header className="sticky top-0 z-20 border-b border-hairline bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-5 py-4">
           <div>
             <span className="text-xs font-semibold uppercase tracking-widest text-brand">
               Check-up Assunzioni
@@ -310,34 +401,75 @@ function Dashboard({ email }: { email: string }) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-5 py-8">
-        {/* La fotografia d'insieme */}
+      <div className="mx-auto max-w-[1600px] px-5 py-8">
+        {/* La fotografia d'insieme, sempre relativa al periodo scelto */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Numero
             icona={<Inbox className="h-4 w-4" />}
-            valore={numeri.totale}
-            etichetta="Lead totali"
+            valore={numeri.inPipeline}
+            etichetta="In pipeline"
           />
           <Numero
-            icona={<Users className="h-4 w-4" />}
-            valore={numeri.daContattare}
-            etichetta="Da contattare"
-            evidenzia={numeri.daContattare > 0}
+            icona={<Clock className="h-4 w-4" />}
+            valore={numeri.daRichiamare}
+            etichetta="Da richiamare"
+            evidenzia={numeri.daRichiamare > 0}
           />
+          <Numero icona={<Trophy className="h-4 w-4" />} valore={numeri.vinti} etichetta="Vinti" />
           <Numero
-            icona={<CalendarClock className="h-4 w-4" />}
-            valore={numeri.settimana}
-            etichetta="Ultimi 7 giorni"
-          />
-          <Numero
-            icona={<Flame className="h-4 w-4" />}
-            valore={numeri.caldi}
-            etichetta="Priorità alta"
+            icona={<TrendingUp className="h-4 w-4" />}
+            valore={numeri.conversione === null ? "—" : `${numeri.conversione}%`}
+            etichetta="Conversione"
+            nota={
+              numeri.conversione === null
+                ? "nessuna chiusa"
+                : `${numeri.vinti} su ${numeri.vinti + numeri.persi} chiuse`
+            }
           />
         </div>
 
-        {/* Filtri */}
-        <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+        {/* Periodo */}
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-ink-soft" />
+          {PERIODI.map((p) => (
+            <Chip key={p.value} attivo={periodo === p.value} onClick={() => setPeriodo(p.value)}>
+              {p.label}
+            </Chip>
+          ))}
+          {periodo === "custom" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={da}
+                max={a || undefined}
+                onChange={(e) => setDa(e.target.value)}
+                className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
+              />
+              <span className="text-sm text-ink-soft">→</span>
+              <input
+                type="date"
+                value={a}
+                min={da || undefined}
+                onChange={(e) => setA(e.target.value)}
+                className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
+              />
+              {(da || a) && (
+                <button
+                  onClick={() => {
+                    setDa("");
+                    setA("");
+                  }}
+                  className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                >
+                  Azzera
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Ricerca, vista, export */}
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
             <input
@@ -347,39 +479,40 @@ function Dashboard({ email }: { email: string }) {
               className="w-full rounded-full border border-hairline bg-white py-3 pl-11 pr-4 text-sm outline-none transition-colors focus:border-brand"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={ordine}
-              onChange={(e) => setOrdine(e.target.value as Ordine)}
-              className="rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-brand"
-            >
-              <option value="recenti">Più recenti</option>
-              <option value="priorita">Priorità</option>
-            </select>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-full border border-hairline bg-white p-1">
+              <BottoneVista attivo={vista === "lista"} onClick={() => setVista("lista")}>
+                <List className="h-4 w-4" />
+                Lista
+              </BottoneVista>
+              <BottoneVista attivo={vista === "pipeline"} onClick={() => setVista("pipeline")}>
+                <LayoutGrid className="h-4 w-4" />
+                Pipeline
+              </BottoneVista>
+            </div>
+
+            {vista === "lista" && (
+              <select
+                value={ordine}
+                onChange={(e) => setOrdine(e.target.value as Ordine)}
+                className="rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-brand"
+              >
+                <option value="recenti">Più recenti</option>
+                <option value="priorita">Priorità</option>
+                <option value="followup">Da richiamare</option>
+              </select>
+            )}
+
             <button
-              onClick={() => scaricaCsv(visibili)}
-              disabled={visibili.length === 0}
+              onClick={() => scaricaCsv(vista === "lista" ? visibili : cercati)}
+              disabled={(vista === "lista" ? visibili : cercati).length === 0}
               className="inline-flex items-center gap-2 rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface disabled:text-ink-soft"
             >
               <Download className="h-4 w-4" />
               CSV
             </button>
           </div>
-        </div>
-
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          <Chip attivo={filtro === "tutti"} onClick={() => setFiltro("tutti")}>
-            Tutti ({leads.length})
-          </Chip>
-          {STATI.map((s) => {
-            const n = leads.filter((l) => l.stato === s.value).length;
-            return (
-              <Chip key={s.value} attivo={filtro === s.value} onClick={() => setFiltro(s.value)}>
-                <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-                {s.label} ({n})
-              </Chip>
-            );
-          })}
         </div>
 
         {errore && (
@@ -389,53 +522,263 @@ function Dashboard({ email }: { email: string }) {
           </div>
         )}
 
-        {/* Lista + dettaglio */}
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
-          <div className={`space-y-2 ${lead ? "hidden lg:block" : ""}`}>
-            {caricamento && leads.length === 0 && (
-              <p className="rounded-2xl border border-hairline bg-white p-6 text-sm text-ink-soft">
-                Carico i lead…
-              </p>
-            )}
-            {!caricamento && visibili.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
-                <Inbox className="mx-auto h-6 w-6 text-ink-soft" />
-                <p className="mt-3 text-sm text-ink-soft">
-                  {leads.length === 0
-                    ? "Nessun lead ancora. Appena qualcuno compila il check-up, compare qui."
-                    : "Nessun lead con questi filtri."}
-                </p>
-              </div>
-            )}
-            {visibili.map((l) => (
-              <RigaLead
-                key={l.id}
-                lead={l}
-                attivo={l.id === selezionato}
-                onClick={() => setSelezionato(l.id)}
-              />
-            ))}
-          </div>
+        {vista === "lista" ? (
+          <>
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+              <Chip attivo={filtro === "tutti"} onClick={() => setFiltro("tutti")}>
+                Tutti ({cercati.length})
+              </Chip>
+              {STATI.map((s) => (
+                <Chip key={s.value} attivo={filtro === s.value} onClick={() => setFiltro(s.value)}>
+                  <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+                  {s.label} ({cercati.filter((l) => l.stato === s.value).length})
+                </Chip>
+              ))}
+            </div>
 
-          <div className={lead ? "" : "hidden lg:block"}>
-            {lead ? (
-              <Dettaglio
-                key={lead.id}
-                lead={lead}
-                onChiudi={() => setSelezionato(null)}
-                onAggiorna={(patch) => aggiorna(lead.id, patch)}
-              />
-            ) : (
-              <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
-                <p className="max-w-xs text-sm text-ink-soft">
-                  Scegli un lead dalla lista per vedere tutte le risposte e richiamarlo.
-                </p>
+            <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
+              <div className={`space-y-2 ${lead ? "hidden lg:block" : ""}`}>
+                {caricamento && leads.length === 0 && (
+                  <p className="rounded-2xl border border-hairline bg-white p-6 text-sm text-ink-soft">
+                    Carico i lead…
+                  </p>
+                )}
+                {!caricamento && visibili.length === 0 && <Vuoto totale={leads.length} />}
+                {visibili.map((l) => (
+                  <RigaLead
+                    key={l.id}
+                    lead={l}
+                    attivo={l.id === selezionato}
+                    onClick={() => setSelezionato(l.id)}
+                  />
+                ))}
               </div>
-            )}
-          </div>
+
+              <div className={lead ? "" : "hidden lg:block"}>
+                {dettaglio ?? (
+                  <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
+                    <p className="max-w-xs text-sm text-ink-soft">
+                      Scegli un lead dalla lista per vedere tutte le risposte e richiamarlo.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <Pipeline
+            leads={cercati}
+            selezionato={selezionato}
+            onApri={setSelezionato}
+            onSposta={richiediStato}
+          />
+        )}
+      </div>
+
+      {/* In pipeline il dettaglio arriva come pannello laterale, per non
+          far collassare le colonne. */}
+      {vista === "pipeline" && lead && (
+        <Pannello onChiudi={() => setSelezionato(null)}>{dettaglio}</Pannello>
+      )}
+
+      {chiusura && (
+        <ModaleMotivo
+          lead={chiusura.lead}
+          onAnnulla={() => setChiusura(null)}
+          onConferma={(motivo) => {
+            cambiaStato(chiusura.lead, "perso", motivo);
+            setChiusura(null);
+          }}
+        />
+      )}
+    </main>
+  );
+}
+
+// -------------------- pipeline --------------------
+
+function Pipeline({
+  leads,
+  selezionato,
+  onApri,
+  onSposta,
+}: {
+  leads: Lead[];
+  selezionato: string | null;
+  onApri: (id: string) => void;
+  onSposta: (lead: Lead, stato: Stato) => void;
+}) {
+  const [sopra, setSopra] = useState<Stato | null>(null);
+
+  const lascia = (stato: Stato, e: DragEvent) => {
+    e.preventDefault();
+    setSopra(null);
+    const id = e.dataTransfer.getData("text/plain");
+    const lead = leads.find((l) => l.id === id);
+    if (lead && lead.stato !== stato) onSposta(lead, stato);
+  };
+
+  return (
+    <div className="mt-5 grid gap-3 overflow-x-auto pb-2 md:grid-cols-3 xl:grid-cols-5">
+      {STATI.map((s) => {
+        const colonna = leads.filter((l) => l.stato === s.value);
+        return (
+          <section
+            key={s.value}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setSopra(s.value);
+            }}
+            onDragLeave={() => setSopra((cur) => (cur === s.value ? null : cur))}
+            onDrop={(e) => lascia(s.value, e)}
+            className={`flex min-h-[200px] flex-col rounded-2xl border p-3 transition-colors ${
+              sopra === s.value ? "border-brand bg-info-bg/50" : "border-hairline bg-white/60"
+            }`}
+          >
+            <header className="flex items-center justify-between px-1 pb-3">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
+                <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                {s.label}
+              </span>
+              <span className="text-sm font-semibold text-ink-soft">{colonna.length}</span>
+            </header>
+
+            <div className="flex-1 space-y-2">
+              {colonna.map((l) => (
+                <CartaLead
+                  key={l.id}
+                  lead={l}
+                  attivo={l.id === selezionato}
+                  onClick={() => onApri(l.id)}
+                />
+              ))}
+              {colonna.length === 0 && (
+                <p className="rounded-xl border border-dashed border-hairline px-3 py-6 text-center text-xs text-ink-soft">
+                  Trascina qui
+                </p>
+              )}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function CartaLead({
+  lead,
+  attivo,
+  onClick,
+}: {
+  lead: Lead;
+  attivo: boolean;
+  onClick: () => void;
+}) {
+  const p = priorita(lead);
+
+  return (
+    <article
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("text/plain", lead.id)}
+      onClick={onClick}
+      className={`cursor-grab rounded-xl border bg-white p-3 transition-all active:cursor-grabbing ${
+        attivo
+          ? "border-brand shadow-[0_8px_24px_-14px_rgba(107,33,255,0.55)]"
+          : "border-hairline hover:border-brand/50"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-ink">{lead.azienda}</p>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${p.chip}`}>
+          {p.label}
+        </span>
+      </div>
+      <p className="mt-0.5 truncate text-xs text-ink-soft">{lead.nome}</p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <EtichettaFollowup lead={lead} />
+        <span className="shrink-0 text-[11px] text-ink-soft">{daQuanto(lead.created_at)}</span>
+      </div>
+    </article>
+  );
+}
+
+/** Pannello laterale: sopra il contenuto su mobile, colonna a destra su desktop. */
+function Pannello({ children, onChiudi }: { children: ReactNode; onChiudi: () => void }) {
+  return (
+    <div className="fixed inset-0 z-30 flex justify-end">
+      <button
+        aria-label="Chiudi"
+        onClick={onChiudi}
+        className="absolute inset-0 bg-ink/20 backdrop-blur-[2px]"
+      />
+      <div className="relative h-full w-full max-w-xl overflow-y-auto bg-surface shadow-2xl">
+        <button
+          onClick={onChiudi}
+          className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-white text-ink-soft hover:text-ink"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------- motivo di perdita --------------------
+
+function ModaleMotivo({
+  lead,
+  onAnnulla,
+  onConferma,
+}: {
+  lead: Lead;
+  onAnnulla: () => void;
+  onConferma: (motivo: string) => void;
+}) {
+  const [scelto, setScelto] = useState<string | null>(null);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center p-4 sm:items-center">
+      <button aria-label="Annulla" onClick={onAnnulla} className="absolute inset-0 bg-ink/30" />
+      <div className="relative w-full max-w-md rounded-2xl border border-hairline bg-white p-6">
+        <h2 className="text-xl text-ink">Perché l'hai perso?</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          {lead.azienda} — serve per capire dove si inceppa, non per l'archivio.
+        </p>
+
+        <div className="mt-5 space-y-2">
+          {MOTIVI_PERDITA.map((m) => (
+            <button
+              key={m}
+              onClick={() => setScelto(m)}
+              className={`w-full rounded-xl border px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                scelto === m
+                  ? "border-brand bg-brand/5 text-ink"
+                  : "border-hairline text-ink-soft hover:border-brand/50 hover:text-ink"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            onClick={onAnnulla}
+            className="rounded-full border border-hairline px-5 py-2.5 text-sm font-semibold text-ink-soft hover:text-ink"
+          >
+            Annulla
+          </button>
+          <button
+            onClick={() => scelto && onConferma(scelto)}
+            disabled={!scelto}
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink/90 disabled:bg-hairline disabled:text-ink-soft"
+          >
+            Segna come perso
+          </button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -445,11 +788,13 @@ function Numero({
   icona,
   valore,
   etichetta,
+  nota,
   evidenzia,
 }: {
   icona: ReactNode;
-  valore: number;
+  valore: ReactNode;
   etichetta: string;
+  nota?: string;
   evidenzia?: boolean;
 }) {
   return (
@@ -463,6 +808,7 @@ function Numero({
         <span className="text-xs font-semibold uppercase tracking-widest">{etichetta}</span>
       </div>
       <p className="display mt-3 text-4xl text-ink">{valore}</p>
+      {nota && <p className="mt-1 text-xs text-ink-soft">{nota}</p>}
     </div>
   );
 }
@@ -487,6 +833,60 @@ function Chip({
     >
       {children}
     </button>
+  );
+}
+
+function BottoneVista({
+  attivo,
+  onClick,
+  children,
+}: {
+  attivo: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+        attivo ? "bg-brand text-white" : "text-ink-soft hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+const STILE_FOLLOWUP: Record<Exclude<Followup, "nessuno">, { chip: string; testo: string }> = {
+  ritardo: { chip: "bg-danger/10 text-danger", testo: "In ritardo" },
+  oggi: { chip: "bg-amber-50 text-amber-700", testo: "Oggi" },
+  futuro: { chip: "bg-hairline text-ink-soft", testo: "" },
+};
+
+function EtichettaFollowup({ lead }: { lead: Lead }) {
+  const stato = followup(lead);
+  if (stato === "nessuno" || !lead.prossimo_contatto) return <span />;
+  const stile = STILE_FOLLOWUP[stato];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${stile.chip}`}
+    >
+      <Clock className="h-3 w-3" />
+      {stile.testo || dataBreve(lead.prossimo_contatto)}
+    </span>
+  );
+}
+
+function Vuoto({ totale }: { totale: number }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
+      <Inbox className="mx-auto h-6 w-6 text-ink-soft" />
+      <p className="mt-3 text-sm text-ink-soft">
+        {totale === 0
+          ? "Nessun lead ancora. Appena qualcuno compila il check-up, compare qui."
+          : "Nessun lead con questi filtri."}
+      </p>
+    </div>
   );
 }
 
@@ -517,7 +917,10 @@ function RigaLead({ lead, attivo, onClick }: { lead: Lead; attivo: boolean; onCl
           <span className={`h-2 w-2 rounded-full ${s.dot}`} />
           {s.label}
         </span>
-        <span className="text-ink-soft">{daQuanto(lead.created_at)}</span>
+        <div className="flex items-center gap-2">
+          <EtichettaFollowup lead={lead} />
+          <span className="text-ink-soft">{daQuanto(lead.created_at)}</span>
+        </div>
       </div>
     </button>
   );
@@ -526,10 +929,12 @@ function RigaLead({ lead, attivo, onClick }: { lead: Lead; attivo: boolean; onCl
 function Dettaglio({
   lead,
   onChiudi,
+  onStato,
   onAggiorna,
 }: {
   lead: Lead;
   onChiudi: () => void;
+  onStato: (stato: Stato) => void;
   onAggiorna: (patch: Partial<Lead>) => void;
 }) {
   // Lo stato della nota si azzera da solo cambiando lead: il chiamante passa
@@ -539,14 +944,7 @@ function Dettaglio({
 
   const p = priorita(lead);
   const tel = telPulito(lead.telefono);
-
-  const cambiaStato = (stato: Stato) => {
-    // Segnare "contattato" senza registrare quando lo hai fatto renderebbe
-    // inutile il campo: lo compiliamo la prima volta che esci da "nuovo".
-    const patch: Partial<Lead> = { stato };
-    if (stato !== "nuovo" && !lead.contattato_at) patch.contattato_at = new Date().toISOString();
-    onAggiorna(patch);
-  };
+  const ritardo = followup(lead) === "ritardo";
 
   const salvaNota = () => {
     onAggiorna({ note: nota.trim() || null });
@@ -580,7 +978,6 @@ function Dettaglio({
 
         <p className="mt-3 text-xs text-ink-soft">Arrivato il {dataEstesa(lead.created_at)}</p>
 
-        {/* Azioni */}
         <div className="mt-5 flex flex-wrap gap-2">
           <a
             href={`tel:${tel}`}
@@ -608,18 +1005,18 @@ function Dettaglio({
         </div>
       </div>
 
-      {/* Stato */}
-      <div className="border-b border-hairline p-6">
+      {/* Stato della trattativa */}
+      <div className="border-b border-hairline bg-surface/60 p-6">
         <Titolino>A che punto sei</Titolino>
         <div className="mt-3 flex flex-wrap gap-2">
           {STATI.map((s) => (
             <button
               key={s.value}
-              onClick={() => cambiaStato(s.value)}
+              onClick={() => onStato(s.value)}
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
                 lead.stato === s.value
                   ? "border-brand bg-brand text-white"
-                  : "border-hairline text-ink-soft hover:text-ink"
+                  : "border-hairline bg-white text-ink-soft hover:text-ink"
               }`}
             >
               <span
@@ -629,11 +1026,56 @@ function Dettaglio({
             </button>
           ))}
         </div>
-        {lead.contattato_at && (
-          <p className="mt-3 text-xs text-ink-soft">
-            Primo contatto: {dataEstesa(lead.contattato_at)}
+
+        {lead.motivo_perdita && (
+          <p className="mt-3 text-sm text-ink-soft">
+            Motivo della perdita: <strong className="text-ink">{lead.motivo_perdita}</strong>
           </p>
         )}
+
+        {/* Prossimo passo: solo se la trattativa è ancora in gioco */}
+        {!eChiuso(lead.stato) && (
+          <div className="mt-5">
+            <Titolino>Prossimo contatto</Titolino>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={lead.prossimo_contatto ?? ""}
+                onChange={(e) => onAggiorna({ prossimo_contatto: e.target.value || null })}
+                className={`rounded-xl border bg-white px-4 py-2.5 text-sm outline-none focus:border-brand ${
+                  ritardo ? "border-danger text-danger" : "border-hairline"
+                }`}
+              />
+              {!lead.prossimo_contatto && (
+                <button
+                  onClick={() => onAggiorna({ prossimo_contatto: oggiISO() })}
+                  className="text-sm font-semibold text-brand underline underline-offset-4"
+                >
+                  Oggi
+                </button>
+              )}
+              {lead.prossimo_contatto && (
+                <button
+                  onClick={() => onAggiorna({ prossimo_contatto: null })}
+                  className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                >
+                  Togli
+                </button>
+              )}
+              {ritardo && (
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-danger">
+                  <AlertCircle className="h-4 w-4" />
+                  Era da richiamare
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 space-y-1 text-xs text-ink-soft">
+          {lead.contattato_at && <p>Primo contatto: {dataEstesa(lead.contattato_at)}</p>}
+          {lead.chiuso_at && <p>Chiuso il: {dataEstesa(lead.chiuso_at)}</p>}
+        </div>
       </div>
 
       {/* Note */}
