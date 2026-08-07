@@ -45,9 +45,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-ink">
-          Qualcosa è andato storto
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">Qualcosa è andato storto</h1>
         <p className="mt-2 text-sm text-ink-soft">
           Riprova tra un istante o torna alla pagina principale.
         </p>
@@ -79,7 +77,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Check-up Assunzioni gratuito per PMI" },
-      { name: "description", content: "Call diagnostica di 30 minuti per capire quanto ti costa assumere male e come ridurre il costo." },
+      {
+        name: "description",
+        content:
+          "Call diagnostica di 30 minuti per capire quanto ti costa assumere male e come ridurre il costo.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Check-up Assunzioni" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -89,7 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -116,6 +121,9 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    // L'area riservata è privata e noindex: non ha senso mandarne le visite
+    // a Google Ads.
+    if (window.location.pathname.startsWith("/admin")) return;
     loadGoogleAds();
   }, []);
 
