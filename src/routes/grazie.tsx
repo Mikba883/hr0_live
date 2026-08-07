@@ -25,11 +25,12 @@ export const Route = createFileRoute("/grazie")({
 function GraziePage() {
   const { tel } = Route.useSearch();
 
+  // Si arriva qui solo dopo che la risposta è stata salvata: è il momento in
+  // cui il lead esiste davvero. Nessuna attesa: trackAdsConversion carica il
+  // tag da sé, quindi non serve dare tempo al root di averlo già caricato.
   useEffect(() => {
-    const t = setTimeout(() => trackAdsConversion(), 300);
-    return () => clearTimeout(t);
+    trackAdsConversion();
   }, []);
-
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-5 py-16">
@@ -59,16 +60,16 @@ function GraziePage() {
           </p>
           <ol className="mt-4 space-y-3 text-base text-ink-soft">
             <li>
-              <span className="font-semibold text-ink">1.</span> Leggo le tue
-              risposte e preparo la call sul tuo caso specifico.
+              <span className="font-semibold text-ink">1.</span> Leggo le tue risposte e preparo la
+              call sul tuo caso specifico.
             </li>
             <li>
-              <span className="font-semibold text-ink">2.</span> Ti chiamo per
-              concordare data e ora della videocall di 30 minuti.
+              <span className="font-semibold text-ink">2.</span> Ti chiamo per concordare data e ora
+              della videocall di 30 minuti.
             </li>
             <li>
-              <span className="font-semibold text-ink">3.</span> Alla fine hai i
-              tuoi numeri nero su bianco — che lavoriamo insieme o no.
+              <span className="font-semibold text-ink">3.</span> Alla fine hai i tuoi numeri nero su
+              bianco — che lavoriamo insieme o no.
             </li>
           </ol>
         </div>
