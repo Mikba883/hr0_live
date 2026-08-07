@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
+import { trackAdsConversion } from "@/lib/google-ads";
 
 type Search = { tel?: string };
 
@@ -22,6 +24,12 @@ export const Route = createFileRoute("/grazie")({
 
 function GraziePage() {
   const { tel } = Route.useSearch();
+
+  useEffect(() => {
+    const t = setTimeout(() => trackAdsConversion(), 300);
+    return () => clearTimeout(t);
+  }, []);
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-5 py-16">

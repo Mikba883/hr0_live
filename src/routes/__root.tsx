@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { loadGoogleAds } from "../lib/google-ads";
 
 function NotFoundComponent() {
   return (
@@ -113,6 +114,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    loadGoogleAds();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
