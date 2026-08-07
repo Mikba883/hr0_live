@@ -76,7 +76,10 @@ function MetodoPage() {
             Trovare personale non è questione di{" "}
             <span className="text-brand">fortuna.</span>
           </h1>
-          <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
+          <div className="mx-auto mt-10 max-w-3xl">
+            <VideoEmbed videoId="x2lul0gEWPE" title="Come funziona il metodo HR0" />
+          </div>
+          <p className="mx-auto mt-10 max-w-2xl text-lg text-ink-soft sm:text-xl">
             Le agenzie ti chiedono il 20-25% della RAL a ogni ricerca, per sempre.
             C'è un'alternativa: costruire il metodo dentro la tua azienda, sulla
             prima posizione vera che devi coprire.
@@ -89,14 +92,6 @@ function MetodoPage() {
           </div>
         </div>
       </section>
-
-      {/* Video */}
-      <Section className="bg-white border-t border-hairline">
-        <H2 className="text-center">Guarda come funziona in 2 minuti</H2>
-        <div className="mt-8">
-          <VideoEmbed videoId="x2lul0gEWPE" title="Come funziona il metodo HR0" />
-        </div>
-      </Section>
 
       {/* Le 3 opzioni */}
       <Section className="bg-white border-t border-hairline">
