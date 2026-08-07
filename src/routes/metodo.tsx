@@ -8,6 +8,7 @@ import { Footer } from "@/components/landing/Footer";
 import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
+import { VideoEmbed } from "@/components/landing/VideoEmbed";
 
 export const Route = createFileRoute("/metodo")({
   head: () => ({
