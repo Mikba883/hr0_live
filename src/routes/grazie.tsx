@@ -25,6 +25,12 @@ export const Route = createFileRoute("/grazie")({
 function GraziePage() {
   const { tel } = Route.useSearch();
 
+  useEffect(() => {
+    const t = setTimeout(() => trackAdsConversion(), 300);
+    return () => clearTimeout(t);
+  }, []);
+
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-5 py-16">
       <div className="mx-auto w-full max-w-xl text-center">
