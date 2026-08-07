@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
+import { trackAdsConversion } from "@/lib/google-ads";
 
 type Search = { tel?: string };
 
