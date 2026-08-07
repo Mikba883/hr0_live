@@ -1,8 +1,28 @@
-# Setup Supabase — Tabella `survey_responses`
+# Setup Supabase — tabella `survey_responses`
 
-Il progetto usa Supabase **esterno** (BYO), quindi le migration non partono in automatico. Copia questo SQL nel tuo progetto Supabase → **SQL Editor → New query → Run**.
+Quando qualcuno completa il check-up su `/check-up`, le risposte vengono salvate in
+una tabella su Supabase. Questa guida serve a creare quella tabella e a rileggere le
+risposte dal **Table Editor**.
+
+Il progetto usa un Supabase **esterno** (BYO): le migration non partono da sole, lo SQL
+va incollato a mano una volta sola.
+
+- Progetto: `hr0` — project ID `uqmznxisgcaljifwbbnq` (regione `eu-central-1`)
+- Tabella: `public.survey_responses`
+- Codice che scrive: `src/routes/check-up.tsx` → `supabase.from("survey_responses").insert(...)`
+
+---
+
+## 1. Crea (o ripara) la tabella
+
+Vai su **Supabase → SQL Editor → New query**, incolla tutto il blocco qui sotto e premi
+**Run**.
+
+Lo script è sicuro da rilanciare quante volte vuoi: se la tabella esiste già non la
+tocca, se le manca qualche colonna la aggiunge, e non cancella mai i dati.
 
 ```sql
+-- 1. Tabella
 create table if not exists public.survey_responses (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -39,11 +59,40 @@ create table if not exists public.survey_responses (
   utm jsonb
 );
 
--- Grants Data API (PostgREST)
+-- 2. Riparazione: aggiunge le colonne eventualmente mancanti
+--    (utile se in passato avevi creato una versione parziale della tabella)
+alter table public.survey_responses
+  add column if not exists nome text,
+  add column if not exists azienda text,
+  add column if not exists ruolo text,
+  add column if not exists email text,
+  add column if not exists telefono text,
+  add column if not exists dipendenti text,
+  add column if not exists settore text,
+  add column if not exists assumere_12m text,
+  add column if not exists momento_azienda text,
+  add column if not exists ruolo_aperto text,
+  add column if not exists ruolo_quale text,
+  add column if not exists urgenza text,
+  add column if not exists tempo_scoperto text,
+  add column if not exists prima_volta text,
+  add column if not exists chi_se_ne_occupa text,
+  add column if not exists frustrazioni text[] default '{}',
+  add column if not exists obiettivo_call text,
+  add column if not exists orario_preferito text,
+  add column if not exists consenso_privacy boolean default false,
+  add column if not exists source text,
+  add column if not exists utm jsonb;
+
+-- 3. Indice: le risposte più recenti in cima, senza rallentare il Table Editor
+create index if not exists survey_responses_created_at_idx
+  on public.survey_responses (created_at desc);
+
+-- 4. Permessi Data API (PostgREST)
 grant insert on public.survey_responses to anon;
 grant all on public.survey_responses to service_role;
 
--- RLS: chiunque può inviare, nessuno può leggere via API pubblica
+-- 5. Sicurezza: chiunque può inviare il form, nessuno può leggere i lead dall'esterno
 alter table public.survey_responses enable row level security;
 
 drop policy if exists "public can insert survey" on public.survey_responses;
@@ -54,4 +103,85 @@ create policy "public can insert survey"
   with check (true);
 ```
 
-Per leggere le risposte usa il **Table Editor** di Supabase (loggato con il tuo account, la RLS non si applica).
+> **Perché nessuno può leggere:** la chiave `VITE_SUPABASE_PUBLISHABLE_KEY` è pubblica —
+> chiunque apra il sito può leggerla dal browser. Per questo alla tabella diamo solo il
+> permesso di **insert**: il form scrive, ma quella chiave non può tirare fuori i dati
+> dei tuoi lead. Tu li leggi dal Table Editor, loggato col tuo account, dove la RLS non
+> si applica.
+
+---
+
+## 2. Verifica che funzioni
+
+### Controllo veloce (dalla dashboard)
+
+**Table Editor → schema `public`** → deve comparire `survey_responses` con tutte le
+colonne. Poi apri `/check-up` sul sito, compila il form fino in fondo: se ti porta alla
+pagina `/grazie` senza errori, la riga è salvata. Torna sul Table Editor e premi
+**Refresh**: la vedi in cima.
+
+Se invece compare il messaggio _"Non sono riuscito a salvare le tue risposte"_, la
+scrittura è fallita — apri la console del browser (F12), l'errore esatto di Supabase è
+loggato lì.
+
+### Controllo dal terminale
+
+In locale, con il `.env` compilato:
+
+```bash
+bun run check:supabase
+```
+
+Ti dice in chiaro se la tabella esiste, se i permessi sono impostati bene e se i dati
+dei lead sono al sicuro. Con `--insert-test` prova anche una scrittura reale:
+
+```bash
+bun run check:supabase --insert-test
+```
+
+Inserisce una riga di prova con nome `TEST — verifica setup`, che puoi cancellare dal
+Table Editor con due click.
+
+---
+
+## 3. Leggere le risposte
+
+**Table Editor → `survey_responses`**, ordina per `created_at` decrescente per avere i
+lead più recenti in cima. Le colonne utili per richiamare sono `nome`, `azienda`,
+`telefono`, `email`, e `urgenza` per capire chi ha fretta.
+
+Per esportare tutto in CSV: menu `⋯` in alto a destra della tabella → **Export data as
+CSV**.
+
+Se preferisci una lettura ragionata, in **SQL Editor** puoi lanciare:
+
+```sql
+select
+  created_at,
+  nome,
+  azienda,
+  telefono,
+  email,
+  ruolo_aperto,
+  ruolo_quale,
+  urgenza,
+  frustrazioni,
+  obiettivo_call
+from public.survey_responses
+order by created_at desc;
+```
+
+---
+
+## Variabili d'ambiente
+
+Il client (`src/lib/supabase.ts`) legge due variabili dal `.env`, che **non** viene
+committato:
+
+```
+VITE_SUPABASE_URL=https://uqmznxisgcaljifwbbnq.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
+```
+
+Le trovi in **Project Settings → API Keys**. Ricordati di impostarle anche
+sull'ambiente di produzione (Lovable), altrimenti il sito pubblicato parte in errore.
