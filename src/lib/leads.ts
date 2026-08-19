@@ -44,6 +44,8 @@ export type Lead = {
   motivo_perdita: string | null;
   /** Data (YYYY-MM-DD) del prossimo passo che ti sei segnato. */
   prossimo_contatto: string | null;
+  /** Cosa devi fare al prossimo passo. Senza questo la data è un promemoria muto. */
+  prossima_azione: string | null;
   /** Quando è finito in "vinto" o "perso". */
   chiuso_at: string | null;
 };
@@ -153,6 +155,17 @@ export function followup(lead: Lead): Followup {
   return "futuro";
 }
 
+/**
+ * Una trattativa aperta senza prossimo passo fissato.
+ *
+ * È la metrica di igiene dei CRM activity-based: un lead in questo stato non
+ * comparirà mai in nessuna lista di cose da fare, quindi muore in silenzio.
+ * Tenere questo numero a zero vale più di qualunque altra ottimizzazione.
+ */
+export function allaDeriva(lead: Lead): boolean {
+  return !eChiuso(lead.stato) && !lead.prossimo_contatto;
+}
+
 // -------------------- periodo --------------------
 
 export type Periodo = "tutti" | "oggi" | "7g" | "30g" | "90g" | "custom";
@@ -200,6 +213,8 @@ export type Riepilogo = {
   persi: number;
   /** Percentuale di trattative chiuse che hai vinto. null se non ne hai chiusa nessuna. */
   conversione: number | null;
+  /** Trattative aperte senza un prossimo passo fissato: il numero da tenere a zero. */
+  allaDeriva: number;
 };
 
 export function riepilogo(leads: Lead[]): Riepilogo {
@@ -217,6 +232,7 @@ export function riepilogo(leads: Lead[]): Riepilogo {
     vinti,
     persi,
     conversione: chiusi === 0 ? null : Math.round((vinti / chiusi) * 100),
+    allaDeriva: leads.filter(allaDeriva).length,
   };
 }
 
@@ -320,6 +336,7 @@ const COLONNE: { key: keyof Lead | "priorita"; label: string }[] = [
   { key: "frustrazioni", label: "Frustrazioni" },
   { key: "obiettivo_call", label: "Obiettivo call" },
   { key: "motivo_perdita", label: "Motivo perdita" },
+  { key: "prossima_azione", label: "Prossima azione" },
   { key: "prossimo_contatto", label: "Prossimo contatto" },
   { key: "contattato_at", label: "Primo contatto" },
   { key: "chiuso_at", label: "Chiuso il" },

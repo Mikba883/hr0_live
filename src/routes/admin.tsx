@@ -11,10 +11,12 @@ import {
 import {
   AlertCircle,
   ArrowLeft,
+  BarChart3,
   Building2,
   CalendarDays,
   Check,
   Clock,
+  Compass,
   Download,
   Inbox,
   LayoutGrid,
@@ -27,6 +29,7 @@ import {
   Phone,
   RefreshCw,
   Search,
+  Sun,
   TrendingUp,
   Trophy,
   X,
@@ -57,6 +60,10 @@ import {
   type Periodo,
   type Stato,
 } from "@/lib/leads";
+import { tipoInfo, type Attivita, type TipoAttivita } from "@/lib/attivita";
+import { Agenda } from "@/components/admin/Agenda";
+import { Andamento } from "@/components/admin/Andamento";
+import { ModaleAzione, type AzioneFatta } from "@/components/admin/ModaleAzione";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -252,6 +259,18 @@ function Login() {
 
 type Vista = "lista" | "pipeline";
 
+/**
+ * Le tre domande a cui la pagina risponde, in ordine di frequenza con cui te
+ * le fai: cosa devo fare adesso, chi sono i lead, come sta andando.
+ */
+type Sezione = "oggi" | "lead" | "andamento";
+
+const SEZIONI: { value: Sezione; label: string; icona: typeof Sun }[] = [
+  { value: "oggi", label: "Oggi", icona: Sun },
+  { value: "lead", label: "Lead", icona: List },
+  { value: "andamento", label: "Andamento", icona: BarChart3 },
+];
+
 /** Chiusura in sospeso: il lead sta andando in "perso" e aspetta il motivo. */
 type Chiusura = { lead: Lead } | null;
 
@@ -260,6 +279,9 @@ function Dashboard({ email }: { email: string }) {
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
 
+  const [attivita, setAttivita] = useState<Attivita[]>([]);
+
+  const [sezione, setSezione] = useState<Sezione>("oggi");
   const [vista, setVista] = useState<Vista>("lista");
   const [q, setQ] = useState("");
   const [filtro, setFiltro] = useState<Stato | "tutti">("tutti");
@@ -269,21 +291,36 @@ function Dashboard({ email }: { email: string }) {
   const [a, setA] = useState("");
   const [selezionato, setSelezionato] = useState<string | null>(null);
   const [chiusura, setChiusura] = useState<Chiusura>(null);
+  /** Lead per cui stai registrando un'azione appena fatta. */
+  const [azione, setAzione] = useState<Lead | null>(null);
 
   const carica = useCallback(async () => {
     setCaricamento(true);
-    const { data, error } = await supabase
-      .from("survey_responses")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [risposteLead, risposteAttivita] = await Promise.all([
+      supabase.from("survey_responses").select("*").order("created_at", { ascending: false }),
+      supabase.from("lead_attivita").select("*").order("fatta_at", { ascending: false }),
+    ]);
     setCaricamento(false);
-    if (error) {
-      console.error(error);
+
+    if (risposteLead.error) {
+      console.error(risposteLead.error);
       setErrore("Non riesco a caricare i lead.");
       return;
     }
+    setLeads((risposteLead.data ?? []) as Lead[]);
+
+    // Lo storico è un pezzo aggiunto dopo: se la tabella non c'è ancora la
+    // pagina resta usabile e lo dice, invece di sembrare rotta.
+    if (risposteAttivita.error) {
+      console.error(risposteAttivita.error);
+      setErrore(
+        "Lo storico delle azioni non è attivo: lancia il blocco SQL di docs/SETUP_CRM_AGENDA.md.",
+      );
+      setAttivita([]);
+      return;
+    }
     setErrore(null);
-    setLeads((data ?? []) as Lead[]);
+    setAttivita((risposteAttivita.data ?? []) as Attivita[]);
   }, []);
 
   useEffect(() => {
@@ -305,6 +342,50 @@ function Dashboard({ email }: { email: string }) {
       }
     },
     [carica],
+  );
+
+  /** Scrive una riga nello storico delle azioni. */
+  const registra = useCallback(
+    async (leadId: string, tipo: TipoAttivita, descrizione: string | null) => {
+      const { data, error } = await supabase
+        .from("lead_attivita")
+        .insert({ lead_id: leadId, tipo, descrizione, autore: email })
+        .select()
+        .single();
+      if (error) {
+        console.error(error);
+        setErrore("Azione non registrata. Riprova.");
+        return;
+      }
+      setAttivita((prev) => [data as Attivita, ...prev]);
+    },
+    [email],
+  );
+
+  /**
+   * Il giro completo di "Fatto": registra quello che hai fatto e nello stesso
+   * gesto fissa il passo successivo. Sono una operazione sola apposta — è la
+   * separazione fra i due che, in tutti i CRM, fa morire le trattative.
+   */
+  const registraAzione = useCallback(
+    (lead: Lead, fatta: AzioneFatta) => {
+      void registra(lead.id, fatta.tipo, fatta.descrizione);
+
+      const patch: Partial<Lead> = {
+        prossima_azione: fatta.prossimaAzione,
+        prossimo_contatto: fatta.prossimoContatto,
+      };
+
+      // Aver davvero raggiunto qualcuno lo fa uscire da "da contattare". Una
+      // nota no: appuntarsi una cosa non è aver parlato con il lead.
+      if (lead.stato === "nuovo" && fatta.tipo !== "nota") {
+        patch.stato = "contattato";
+        patch.contattato_at = lead.contattato_at ?? new Date().toISOString();
+      }
+
+      void aggiorna(lead.id, patch);
+    },
+    [aggiorna, registra],
   );
 
   /**
@@ -330,8 +411,13 @@ function Dashboard({ email }: { email: string }) {
         patch.motivo_perdita = null;
       }
       void aggiorna(lead.id, patch);
+      void registra(
+        lead.id,
+        "stato",
+        motivo ? `${statoInfo(stato).label} — ${motivo}` : statoInfo(stato).label,
+      );
     },
-    [aggiorna],
+    [aggiorna, registra],
   );
 
   /** In "perso" chiediamo prima il motivo; sugli altri stati si applica subito. */
@@ -350,7 +436,15 @@ function Dashboard({ email }: { email: string }) {
     [leads, periodo, da, a],
   );
 
-  const numeri = useMemo(() => riepilogo(nelRange), [nelRange]);
+  // L'agenda e l'andamento parlano di adesso, non di una fetta di calendario:
+  // lì i numeri guardano tutti i lead, altrimenti un periodo stretto
+  // nasconderebbe proprio le trattative rimaste indietro.
+  const insieme = useMemo(
+    () => (sezione === "lead" ? nelRange : leads),
+    [sezione, nelRange, leads],
+  );
+
+  const numeri = useMemo(() => riepilogo(insieme), [insieme]);
 
   const cercati = useMemo(() => nelRange.filter((l) => cercaLead(l, q)), [nelRange, q]);
 
@@ -359,15 +453,24 @@ function Dashboard({ email }: { email: string }) {
     return ordinaLead(filtrati, ordine);
   }, [cercati, filtro, ordine]);
 
+  /** Da agenda e diario si arriva sempre al dettaglio, che vive nella sezione Lead. */
+  const apriLead = useCallback((id: string) => {
+    setSezione("lead");
+    setVista("lista");
+    setSelezionato(id);
+  }, []);
+
   const lead = leads.find((l) => l.id === selezionato) ?? null;
 
   const dettaglio = lead ? (
     <Dettaglio
       key={lead.id}
       lead={lead}
+      attivita={attivita.filter((a) => a.lead_id === lead.id)}
       onChiudi={() => setSelezionato(null)}
       onStato={(stato) => richiediStato(lead, stato)}
       onAggiorna={(patch) => void aggiorna(lead.id, patch)}
+      onFatto={() => setAzione(lead)}
     />
   ) : null;
 
@@ -399,11 +502,37 @@ function Dashboard({ email }: { email: string }) {
             </button>
           </div>
         </div>
+
+        <nav className="mx-auto flex max-w-[1600px] gap-1 px-5">
+          {SEZIONI.map((sz) => {
+            const Icona = sz.icona;
+            const attiva = sezione === sz.value;
+            return (
+              <button
+                key={sz.value}
+                onClick={() => setSezione(sz.value)}
+                className={`-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
+                  attiva
+                    ? "border-brand text-brand"
+                    : "border-transparent text-ink-soft hover:text-ink"
+                }`}
+              >
+                <Icona className="h-4 w-4" />
+                {sz.label}
+                {sz.value === "oggi" && numeri.daRichiamare > 0 && (
+                  <span className="rounded-full bg-danger px-1.5 py-0.5 text-[11px] font-bold text-white">
+                    {numeri.daRichiamare}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       <div className="mx-auto max-w-[1600px] px-5 py-8">
         {/* La fotografia d'insieme, sempre relativa al periodo scelto */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Numero
             icona={<Inbox className="h-4 w-4" />}
             valore={numeri.inPipeline}
@@ -414,6 +543,13 @@ function Dashboard({ email }: { email: string }) {
             valore={numeri.daRichiamare}
             etichetta="Da richiamare"
             evidenzia={numeri.daRichiamare > 0}
+          />
+          <Numero
+            icona={<Compass className="h-4 w-4" />}
+            valore={numeri.allaDeriva}
+            etichetta="Senza prossimo passo"
+            evidenzia={numeri.allaDeriva > 0}
+            nota="da tenere a zero"
           />
           <Numero icona={<Trophy className="h-4 w-4" />} valore={numeri.vinti} etichetta="Vinti" />
           <Numero
@@ -428,92 +564,98 @@ function Dashboard({ email }: { email: string }) {
           />
         </div>
 
-        {/* Periodo */}
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-ink-soft" />
-          {PERIODI.map((p) => (
-            <Chip key={p.value} attivo={periodo === p.value} onClick={() => setPeriodo(p.value)}>
-              {p.label}
-            </Chip>
-          ))}
-          {periodo === "custom" && (
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                type="date"
-                value={da}
-                max={a || undefined}
-                onChange={(e) => setDa(e.target.value)}
-                className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
-              />
-              <span className="text-sm text-ink-soft">→</span>
-              <input
-                type="date"
-                value={a}
-                min={da || undefined}
-                onChange={(e) => setA(e.target.value)}
-                className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
-              />
-              {(da || a) && (
-                <button
-                  onClick={() => {
-                    setDa("");
-                    setA("");
-                  }}
-                  className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
-                >
-                  Azzera
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Ricerca, vista, export */}
-        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cerca per nome, azienda, email, telefono…"
-              className="w-full rounded-full border border-hairline bg-white py-3 pl-11 pr-4 text-sm outline-none transition-colors focus:border-brand"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-full border border-hairline bg-white p-1">
-              <BottoneVista attivo={vista === "lista"} onClick={() => setVista("lista")}>
-                <List className="h-4 w-4" />
-                Lista
-              </BottoneVista>
-              <BottoneVista attivo={vista === "pipeline"} onClick={() => setVista("pipeline")}>
-                <LayoutGrid className="h-4 w-4" />
-                Pipeline
-              </BottoneVista>
-            </div>
-
-            {vista === "lista" && (
-              <select
-                value={ordine}
-                onChange={(e) => setOrdine(e.target.value as Ordine)}
-                className="rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-brand"
-              >
-                <option value="recenti">Più recenti</option>
-                <option value="priorita">Priorità</option>
-                <option value="followup">Da richiamare</option>
-              </select>
+        {/* Periodo, ricerca e vista servono solo alla sezione Lead:
+            l'agenda guarda sempre a oggi e l'andamento ha la sua scala. */}
+        {sezione === "lead" && (
+          <>
+          {/* Periodo */}
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-ink-soft" />
+            {PERIODI.map((p) => (
+              <Chip key={p.value} attivo={periodo === p.value} onClick={() => setPeriodo(p.value)}>
+                {p.label}
+              </Chip>
+            ))}
+            {periodo === "custom" && (
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="date"
+                  value={da}
+                  max={a || undefined}
+                  onChange={(e) => setDa(e.target.value)}
+                  className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
+                />
+                <span className="text-sm text-ink-soft">→</span>
+                <input
+                  type="date"
+                  value={a}
+                  min={da || undefined}
+                  onChange={(e) => setA(e.target.value)}
+                  className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-brand"
+                />
+                {(da || a) && (
+                  <button
+                    onClick={() => {
+                      setDa("");
+                      setA("");
+                    }}
+                    className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                  >
+                    Azzera
+                  </button>
+                )}
+              </div>
             )}
-
-            <button
-              onClick={() => scaricaCsv(vista === "lista" ? visibili : cercati)}
-              disabled={(vista === "lista" ? visibili : cercati).length === 0}
-              className="inline-flex items-center gap-2 rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface disabled:text-ink-soft"
-            >
-              <Download className="h-4 w-4" />
-              CSV
-            </button>
           </div>
-        </div>
+
+          {/* Ricerca, vista, export */}
+          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Cerca per nome, azienda, email, telefono…"
+                className="w-full rounded-full border border-hairline bg-white py-3 pl-11 pr-4 text-sm outline-none transition-colors focus:border-brand"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-full border border-hairline bg-white p-1">
+                <BottoneVista attivo={vista === "lista"} onClick={() => setVista("lista")}>
+                  <List className="h-4 w-4" />
+                  Lista
+                </BottoneVista>
+                <BottoneVista attivo={vista === "pipeline"} onClick={() => setVista("pipeline")}>
+                  <LayoutGrid className="h-4 w-4" />
+                  Pipeline
+                </BottoneVista>
+              </div>
+
+              {vista === "lista" && (
+                <select
+                  value={ordine}
+                  onChange={(e) => setOrdine(e.target.value as Ordine)}
+                  className="rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink outline-none focus:border-brand"
+                >
+                  <option value="recenti">Più recenti</option>
+                  <option value="priorita">Priorità</option>
+                  <option value="followup">Da richiamare</option>
+                </select>
+              )}
+
+              <button
+                onClick={() => scaricaCsv(vista === "lista" ? visibili : cercati)}
+                disabled={(vista === "lista" ? visibili : cercati).length === 0}
+                className="inline-flex items-center gap-2 rounded-full border border-hairline bg-white px-4 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface disabled:text-ink-soft"
+              >
+                <Download className="h-4 w-4" />
+                CSV
+              </button>
+            </div>
+          </div>
+          </>
+        )}
 
         {errore && (
           <div className="mt-4 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
@@ -522,56 +664,72 @@ function Dashboard({ email }: { email: string }) {
           </div>
         )}
 
-        {vista === "lista" ? (
-          <>
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              <Chip attivo={filtro === "tutti"} onClick={() => setFiltro("tutti")}>
-                Tutti ({cercati.length})
-              </Chip>
-              {STATI.map((s) => (
-                <Chip key={s.value} attivo={filtro === s.value} onClick={() => setFiltro(s.value)}>
-                  <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-                  {s.label} ({cercati.filter((l) => l.stato === s.value).length})
-                </Chip>
-              ))}
-            </div>
+        {sezione === "oggi" && (
+          <Agenda
+            leads={leads}
+            onApri={apriLead}
+            onFatto={setAzione}
+          />
+        )}
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
-              <div className={`space-y-2 ${lead ? "hidden lg:block" : ""}`}>
-                {caricamento && leads.length === 0 && (
-                  <p className="rounded-2xl border border-hairline bg-white p-6 text-sm text-ink-soft">
-                    Carico i lead…
-                  </p>
-                )}
-                {!caricamento && visibili.length === 0 && <Vuoto totale={leads.length} />}
-                {visibili.map((l) => (
-                  <RigaLead
-                    key={l.id}
-                    lead={l}
-                    attivo={l.id === selezionato}
-                    onClick={() => setSelezionato(l.id)}
-                  />
+        {sezione === "lead" && (
+          <>
+          {vista === "lista" ? (
+            <>
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                <Chip attivo={filtro === "tutti"} onClick={() => setFiltro("tutti")}>
+                  Tutti ({cercati.length})
+                </Chip>
+                {STATI.map((s) => (
+                  <Chip key={s.value} attivo={filtro === s.value} onClick={() => setFiltro(s.value)}>
+                    <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+                    {s.label} ({cercati.filter((l) => l.stato === s.value).length})
+                  </Chip>
                 ))}
               </div>
 
-              <div className={lead ? "" : "hidden lg:block"}>
-                {dettaglio ?? (
-                  <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
-                    <p className="max-w-xs text-sm text-ink-soft">
-                      Scegli un lead dalla lista per vedere tutte le risposte e richiamarlo.
+              <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
+                <div className={`space-y-2 ${lead ? "hidden lg:block" : ""}`}>
+                  {caricamento && leads.length === 0 && (
+                    <p className="rounded-2xl border border-hairline bg-white p-6 text-sm text-ink-soft">
+                      Carico i lead…
                     </p>
-                  </div>
-                )}
+                  )}
+                  {!caricamento && visibili.length === 0 && <Vuoto totale={leads.length} />}
+                  {visibili.map((l) => (
+                    <RigaLead
+                      key={l.id}
+                      lead={l}
+                      attivo={l.id === selezionato}
+                      onClick={() => setSelezionato(l.id)}
+                    />
+                  ))}
+                </div>
+
+                <div className={lead ? "" : "hidden lg:block"}>
+                  {dettaglio ?? (
+                    <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-hairline bg-white p-8 text-center">
+                      <p className="max-w-xs text-sm text-ink-soft">
+                        Scegli un lead dalla lista per vedere tutte le risposte e richiamarlo.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </>
+          ) : (
+            <Pipeline
+              leads={cercati}
+              selezionato={selezionato}
+              onApri={setSelezionato}
+              onSposta={richiediStato}
+            />
+          )}
           </>
-        ) : (
-          <Pipeline
-            leads={cercati}
-            selezionato={selezionato}
-            onApri={setSelezionato}
-            onSposta={richiediStato}
-          />
+        )}
+
+        {sezione === "andamento" && (
+          <Andamento leads={leads} attivita={attivita} onApri={apriLead} />
         )}
       </div>
 
@@ -579,6 +737,17 @@ function Dashboard({ email }: { email: string }) {
           far collassare le colonne. */}
       {vista === "pipeline" && lead && (
         <Pannello onChiudi={() => setSelezionato(null)}>{dettaglio}</Pannello>
+      )}
+
+      {azione && (
+        <ModaleAzione
+          lead={azione}
+          onAnnulla={() => setAzione(null)}
+          onConferma={(fatta) => {
+            registraAzione(azione, fatta);
+            setAzione(null);
+          }}
+        />
       )}
 
       {chiusura && (
@@ -928,14 +1097,18 @@ function RigaLead({ lead, attivo, onClick }: { lead: Lead; attivo: boolean; onCl
 
 function Dettaglio({
   lead,
+  attivita,
   onChiudi,
   onStato,
   onAggiorna,
+  onFatto,
 }: {
   lead: Lead;
+  attivita: Attivita[];
   onChiudi: () => void;
   onStato: (stato: Stato) => void;
   onAggiorna: (patch: Partial<Lead>) => void;
+  onFatto: () => void;
 }) {
   // Lo stato della nota si azzera da solo cambiando lead: il chiamante passa
   // key={lead.id}, quindi React rimonta il componente invece di risincronizzarlo.
@@ -1003,6 +1176,16 @@ function Dettaglio({
             Email
           </a>
         </div>
+
+        {!eChiuso(lead.stato) && (
+          <button
+            onClick={onFatto}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-info-bg"
+          >
+            <Check className="h-4 w-4" />
+            Registra quello che hai fatto
+          </button>
+        )}
       </div>
 
       {/* Stato della trattativa */}
@@ -1036,7 +1219,16 @@ function Dettaglio({
         {/* Prossimo passo: solo se la trattativa è ancora in gioco */}
         {!eChiuso(lead.stato) && (
           <div className="mt-5">
-            <Titolino>Prossimo contatto</Titolino>
+            <Titolino>Prossimo passo</Titolino>
+
+            {/* La data da sola è un promemoria muto: qui si scrive cosa devi fare. */}
+            <input
+              value={lead.prossima_azione ?? ""}
+              onChange={(e) => onAggiorna({ prossima_azione: e.target.value || null })}
+              placeholder="Cosa devi fare — es. richiamare per fissare la call"
+              className="mt-2 w-full rounded-xl border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-brand"
+            />
+
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
                 type="date"
@@ -1105,6 +1297,31 @@ function Dettaglio({
             </span>
           )}
         </div>
+      </div>
+
+      {/* Storico: cos'è successo su questa trattativa, dal più recente */}
+      <div className="border-b border-hairline p-6">
+        <Titolino>Storico</Titolino>
+        {attivita.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-soft">
+            Ancora niente. Ogni azione che registri finisce qui, in ordine di tempo.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {attivita.map((a) => {
+              const t = tipoInfo(a.tipo);
+              return (
+                <li key={a.id} className="flex flex-wrap items-baseline gap-2 text-sm">
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${t.chip}`}>
+                    {t.label}
+                  </span>
+                  <span className="text-xs text-ink-soft">{dataEstesa(a.fatta_at)}</span>
+                  {a.descrizione && <span className="text-ink">{a.descrizione}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       {/* Risposte */}

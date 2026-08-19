@@ -6,6 +6,10 @@ primo, e ti lascia portare avanti ogni trattativa fino a vinta o persa.
 Prerequisito: la tabella `survey_responses` deve già esistere e ricevere le risposte
 (vedi `SETUP_SUPABASE_SURVEY.md`).
 
+> **Dopo questa guida, vai su `SETUP_CRM_AGENDA.md`**: aggiunge l'agenda delle cose
+> da fare e lo storico delle azioni, cioè le due parti che rendono la pagina
+> utilizzabile tutti i giorni invece che solo consultabile.
+
 Serve una cosa in più: **decidere chi può leggere**. La chiave
 `VITE_SUPABASE_PUBLISHABLE_KEY` è pubblica e visibile a chiunque apra il sito, quindi non
 può servire per leggere i lead. La pagina usa un login vero (Supabase Auth) e il database
