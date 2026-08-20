@@ -83,7 +83,7 @@ function CostoPage() {
       </AnnouncementBar>
 
       {/* Hero */}
-      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-14 sm:pt-32 sm:pb-20">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(107,33,255,0.08),transparent_65%)]"
@@ -104,6 +104,20 @@ function CostoPage() {
             <p className="text-sm text-ink-soft">
               30 min · Nessun impegno · Numeri tuoi da tenere
             </p>
+          </div>
+          <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-full border border-hairline bg-white px-6 py-3 shadow-sm">
+            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
+              <Check className="h-4 w-4 text-brand" />
+              11+ anni di esperienza
+            </span>
+            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
+              <Check className="h-4 w-4 text-brand" />
+              +24 realtà aziendali
+            </span>
+            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
+              <Check className="h-4 w-4 text-brand" />
+              6 mesi garanzia sostituzione
+            </span>
           </div>
         </div>
       </section>
@@ -153,19 +167,25 @@ function CostoPage() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-hairline pt-8">
-            <LogoCloud label="Aziende con cui ho lavorato" />
-          </div>
         </div>
       </Section>
 
-
+      {/* Logo aziende */}
+      <Section className="bg-info-bg border-t border-hairline !py-14 sm:!py-16">
+        <div className="text-center">
+          <Eyebrow>Social proof</Eyebrow>
+          <H2 className="text-ink">Aziende con cui ho collaborato</H2>
+        </div>
+        <div className="mt-8">
+          <LogoCloud size="lg" />
+        </div>
+      </Section>
 
       {/* Agitazione */}
       <Section className="bg-white border-t border-hairline">
         <div className="grid gap-10 md:grid-cols-[3fr_2fr] md:items-center">
           <div>
-            <H2>Non è colpa tua. È che nessuno ti ha mai dato un metodo.</H2>
+            <H2>Non è un limite tuo: serve solo un metodo per assumere bene.</H2>
             <div className="mt-6 space-y-4 text-lg text-ink-soft">
               <p>
                 Il 90% delle PMI assume così: passaparola, un annuncio online,
