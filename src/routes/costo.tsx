@@ -137,7 +137,7 @@ function CostoPage() {
               </div>
             </div>
             <div className="absolute -bottom-5 -left-4 hidden w-56 sm:block">
-              <BlurReveal value="18.000€" label="per ogni assunzione sbagliata" />
+              <BlurReveal value="18.000€" />
             </div>
           </div>
         </div>
