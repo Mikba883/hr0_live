@@ -127,11 +127,8 @@ function CostoPage() {
               <img
                 src="/calculator-hero.png"
                 alt="Calcolatore del costo nascosto delle assunzioni"
-                className="aspect-square w-full object-cover"
+                className="aspect-[4/5] w-full object-cover"
               />
-              <div className="border-t border-hairline p-5">
-                <p className="text-sm font-semibold text-ink">Il tuo costo nascosto</p>
-              </div>
             </div>
             <div className="absolute -bottom-5 -left-4 hidden w-56 sm:block">
               <BlurReveal value="??.???€" />
