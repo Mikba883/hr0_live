@@ -83,41 +83,62 @@ function CostoPage() {
       </AnnouncementBar>
 
       {/* Hero */}
-      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-14 sm:pt-32 sm:pb-20">
+      <section id="hero" className="relative overflow-hidden px-5 pt-16 pb-14 sm:pt-24 sm:pb-20">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(107,33,255,0.08),transparent_65%)]"
         />
-        <div className="relative mx-auto max-w-5xl text-center">
-          <Eyebrow>Per titolari e amministratori di PMI</Eyebrow>
-          <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[68px] text-ink">
-            Un'assunzione sbagliata ti costa fino a{" "}
-            <span className="text-danger">18.000€</span>.
-          </h1>
-          <p className="mx-auto mt-8 max-w-2xl text-lg text-ink-soft sm:text-xl">
-            Ruoli scoperti, persone che se ne vanno, il tuo tempo bruciato tra CV
-            e colloqui. In 30 minuti calcoliamo insieme il tuo costo nascosto —
-            gratis.
-          </p>
-          <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="/check-up">Prenota il check-up gratuito</CtaButton>
-            <p className="text-sm text-ink-soft">
-              30 min · Nessun impegno · Numeri tuoi da tenere
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-14">
+          <div className="text-center md:text-left">
+            <Eyebrow>Per titolari e amministratori di PMI</Eyebrow>
+            <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[62px] text-ink">
+              Un'assunzione sbagliata ti costa fino a{" "}
+              <span className="text-danger">18.000€</span>.
+            </h1>
+            <p className="mx-auto mt-7 max-w-xl text-lg text-ink-soft sm:text-xl md:mx-0">
+              Ruoli scoperti, persone che se ne vanno, il tuo tempo bruciato tra
+              CV e colloqui. In 30 minuti calcoliamo insieme il tuo costo
+              nascosto.
             </p>
+            <div className="mt-8 flex max-w-md flex-col items-center gap-3 md:items-start">
+              <CtaButton href="/check-up">Prenota il check-up gratuito</CtaButton>
+              <p className="text-sm text-ink-soft">
+                30 min · Nessun impegno · Numeri tuoi da tenere
+              </p>
+            </div>
+            <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 md:justify-start">
+              {[
+                "11+ anni di esperienza",
+                "+24 realtà aziendali",
+                "6 mesi garanzia sostituzione",
+              ].map((t) => (
+                <li key={t} className="inline-flex items-center gap-2 text-sm text-ink-soft">
+                  <Check className="h-4 w-4 shrink-0 text-brand" />
+                  {t}
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-full border border-hairline bg-white px-6 py-3 shadow-sm">
-            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
-              <Check className="h-4 w-4 text-brand" />
-              11+ anni di esperienza
-            </span>
-            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
-              <Check className="h-4 w-4 text-brand" />
-              +24 realtà aziendali
-            </span>
-            <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
-              <Check className="h-4 w-4 text-brand" />
-              6 mesi garanzia sostituzione
-            </span>
+
+          <div className="relative mx-auto w-full max-w-sm">
+            <div className="absolute -inset-3 rotate-3 rounded-[28px] bg-info-bg" aria-hidden />
+            <div className="relative overflow-hidden rounded-[24px] border border-hairline bg-white shadow-[0_24px_60px_-30px_rgba(20,20,40,0.35)]">
+              <img
+                src="/Photo.png"
+                alt="Michele Baroni, consulente HR per PMI"
+                className="aspect-[4/5] w-full object-cover"
+              />
+              <div className="border-t border-hairline p-5">
+                <p className="text-sm font-semibold text-ink">Michele Baroni</p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Il check-up lo faccio io, di persona. Non un commerciale.
+                </p>
+              </div>
+            </div>
+            <div className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-hairline bg-white px-4 py-3 shadow-lg sm:block">
+              <p className="display text-2xl text-danger">4 mesi</p>
+              <p className="text-xs text-ink-soft">di ruolo scoperto, in media</p>
+            </div>
           </div>
         </div>
       </section>
