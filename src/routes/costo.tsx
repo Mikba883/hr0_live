@@ -218,43 +218,8 @@ function CostoPage() {
         </div>
       </Section>
 
-      {/* Chi sono (compatto) */}
-      <Section className="bg-white border-t border-hairline">
-        <H2>Chi fa il check-up</H2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-[160px_1fr] sm:items-center">
-          <div className="relative mx-auto w-full max-w-[160px]">
-            <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
-            <img
-              src="/Photo.png"
-              alt="Michele Baroni, consulente HR per PMI"
-              loading="lazy"
-              className="relative aspect-square w-full rounded-2xl object-cover"
-            />
-          </div>
-          <div className="space-y-3 text-lg text-ink-soft">
-            <p>
-              Sono <span className="font-semibold text-ink">Michele Baroni</span>: 11 anni
-              tra <span className="font-semibold text-ink">Accenture</span> e ricerche di
-              personale come partner freelance di{" "}
-              <span className="font-semibold text-ink">Bain &amp; Company</span>.
-            </p>
-            <p>
-              Oggi porto quel metodo nelle PMI — e il check-up lo faccio io, di persona.
-            </p>
-          </div>
-        </div>
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {bioBadges.map((b) => (
-            <div
-              key={b}
-              className="flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-3 text-sm font-semibold text-ink"
-            >
-              <Check className="h-4 w-4 shrink-0 text-brand" />
-              <span>{b}</span>
-            </div>
-          ))}
-        </div>
-      </Section>
+
+
 
       {/* CTA finale */}
       <Section className="bg-ink">
