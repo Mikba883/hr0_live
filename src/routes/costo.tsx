@@ -131,13 +131,10 @@ function CostoPage() {
               />
               <div className="border-t border-hairline p-5">
                 <p className="text-sm font-semibold text-ink">Il tuo costo nascosto</p>
-                <p className="mt-1 text-sm text-ink-soft">
-                  In 30 minuti trasformiamo i numeri della tua azienda in una stima concreta.
-                </p>
               </div>
             </div>
             <div className="absolute -bottom-5 -left-4 hidden w-56 sm:block">
-              <BlurReveal value="18.000€" />
+              <BlurReveal value="??.???€" />
             </div>
           </div>
         </div>
