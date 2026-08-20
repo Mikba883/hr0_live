@@ -153,9 +153,6 @@ function CostoPage() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-hairline pt-8">
-            <LogoCloud label="Aziende con cui ho lavorato" />
-          </div>
         </div>
       </Section>
 
