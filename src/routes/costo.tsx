@@ -283,7 +283,6 @@ function CostoPage() {
             </Card>
           ))}
         </div>
-        <CtaBlock />
       </Section>
 
       {/* FAQ */}
