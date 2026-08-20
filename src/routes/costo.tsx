@@ -100,7 +100,7 @@ function CostoPage() {
             gratis.
           </p>
           <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-            <CtaButton href="#calcolatore">Calcola il tuo costo →</CtaButton>
+            <CtaButton href="/check-up">Prenota il check-up gratuito</CtaButton>
             <p className="text-sm text-ink-soft">
               30 min · Nessun impegno · Numeri tuoi da tenere
             </p>
@@ -185,7 +185,10 @@ function CostoPage() {
       <Section className="bg-white border-t border-hairline">
         <div className="grid gap-10 md:grid-cols-[3fr_2fr] md:items-center">
           <div>
-            <H2>Non è un limite tuo: serve solo un metodo per assumere bene.</H2>
+            <H2>
+              Le aziende che crescono hanno un metodo strutturato per la
+              selezione del personale.
+            </H2>
             <div className="mt-6 space-y-4 text-lg text-ink-soft">
               <p>
                 Il 90% delle PMI assume così: passaparola, un annuncio online,
