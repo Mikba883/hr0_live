@@ -105,7 +105,7 @@ function CostoPage() {
               30 min · Nessun impegno · Numeri tuoi da tenere
             </p>
           </div>
-          <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-full border border-hairline bg-white px-6 py-3 shadow-sm">
             <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
               <Check className="h-4 w-4 text-brand" />
               11+ anni di esperienza
