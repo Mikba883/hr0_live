@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { supabase } from "@/lib/supabase";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { salvaCheckUp } from "@/lib/checkup";
 
 export const Route = createFileRoute("/check-up")({
   head: () => ({
@@ -242,7 +242,7 @@ function CheckUpPage() {
   const [state, setState] = useState<State>(initial);
   const [index, setIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ messaggio: string; dettaglio: string } | null>(null);
   const [touched, setTouched] = useState(false);
   const [utm, setUtm] = useState<Record<string, string>>({});
   const [source, setSource] = useState<string>("");
@@ -297,6 +297,17 @@ function CheckUpPage() {
     if (safeIndex > 0) setIndex(safeIndex - 1);
   };
 
+  // ChoiceList fa avanzare da solo dopo la scelta, ma con un `setTimeout`: se
+  // gli passassimo `goNext` direttamente, il timer eseguirebbe la versione
+  // creata *prima* del click, che vede la risposta ancora vuota e blocca
+  // l'avanzamento con un "Scegli un'opzione." comparso dal nulla. Il ref fa sì
+  // che al momento dello scatto venga chiamata la versione aggiornata.
+  const goNextRef = useRef(goNext);
+  useEffect(() => {
+    goNextRef.current = goNext;
+  });
+  const avanti = useCallback(() => goNextRef.current(), []);
+
   const submit = async () => {
     setSubmitting(true);
     setError(null);
@@ -324,11 +335,11 @@ function CheckUpPage() {
       source: source || null,
       utm: Object.keys(utm).length ? utm : null,
     };
-    const { error: e } = await supabase.from("survey_responses").insert(payload);
+    const esito = await salvaCheckUp(payload);
     setSubmitting(false);
-    if (e) {
-      console.error(e);
-      setError("Non sono riuscito a salvare le tue risposte. Riprova.");
+    if (!esito.ok) {
+      console.error("Check-up non salvato:", esito.dettaglio);
+      setError({ messaggio: esito.messaggio, dettaglio: esito.dettaglio });
       return;
     }
     navigate({ to: "/grazie", search: { tel: state.telefono.trim() } as never });
@@ -369,13 +380,14 @@ function CheckUpPage() {
             set={set}
             touched={touched}
             error={currentError}
-            onEnter={goNext}
+            onEnter={avanti}
           />
         )}
 
         {error && (
           <div className="mt-6 rounded-xl border border-danger/40 bg-danger/5 p-3 text-sm text-danger">
-            {error}
+            <p>{error.messaggio}</p>
+            <p className="mt-2 font-mono text-xs text-danger/70">{error.dettaglio}</p>
           </div>
         )}
 
