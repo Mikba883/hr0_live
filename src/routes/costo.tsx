@@ -105,6 +105,20 @@ function CostoPage() {
               30 min · Nessun impegno · Numeri tuoi da tenere
             </p>
           </div>
+          <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 divide-y divide-hairline rounded-2xl border border-hairline bg-white p-6 shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div className="flex flex-col items-center justify-center px-4 py-3 text-center">
+              <span className="display text-2xl text-brand">11+</span>
+              <span className="text-sm text-ink-soft">anni di esperienza</span>
+            </div>
+            <div className="flex flex-col items-center justify-center px-4 py-3 text-center">
+              <span className="display text-2xl text-brand">+24</span>
+              <span className="text-sm text-ink-soft">realtà aziendali</span>
+            </div>
+            <div className="flex flex-col items-center justify-center px-4 py-3 text-center">
+              <span className="display text-2xl text-brand">6 mesi</span>
+              <span className="text-sm text-ink-soft">garanzia sostituzione</span>
+            </div>
+          </div>
         </div>
       </section>
 
