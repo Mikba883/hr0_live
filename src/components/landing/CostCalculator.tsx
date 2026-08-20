@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const eur = (n: number) =>
   new Intl.NumberFormat("it-IT", {
@@ -7,13 +7,19 @@ const eur = (n: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(n));
 
-function Slider({
+function clamp(v: number, min: number, max: number) {
+  if (Number.isNaN(v)) return min;
+  return Math.min(max, Math.max(min, v));
+}
+
+function Field({
   label,
   value,
   min,
   max,
   step = 1,
   format,
+  suffix,
   onChange,
 }: {
   label: string;
@@ -22,25 +28,71 @@ function Slider({
   max: number;
   step?: number;
   format: (v: number) => string;
+  suffix?: string;
   onChange: (v: number) => void;
 }) {
   return (
     <div>
-      <div className="mb-2 flex items-baseline justify-between gap-4">
-        <label className="text-sm font-semibold text-ink">{label}</label>
-        <span className="text-base font-semibold text-brand">{format(value)}</span>
+      <div className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <label className="min-w-0 text-sm font-semibold text-ink">{label}</label>
+        <span className="shrink-0 text-base font-semibold text-brand">
+          {format(value)}
+        </span>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[color:var(--color-brand)]"
-      />
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          aria-label={label}
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="h-6 w-full accent-[color:var(--color-brand)]"
+        />
+        <div className="flex shrink-0 items-center gap-1 rounded-xl border border-hairline bg-white px-2 py-1">
+          <input
+            type="number"
+            inputMode="numeric"
+            aria-label={`${label} (valore esatto)`}
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(clamp(Number(e.target.value), min, max))}
+            className="w-16 bg-transparent text-right text-sm font-semibold text-ink outline-none"
+          />
+          {suffix && <span className="text-xs text-ink-soft">{suffix}</span>}
+        </div>
+      </div>
     </div>
   );
+}
+
+function useCountUp(target: number) {
+  const [display, setDisplay] = useState(target);
+  const fromRef = useRef(target);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const from = fromRef.current;
+    const start = performance.now();
+    const duration = 500;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = from + (target - from) * eased;
+      setDisplay(v);
+      fromRef.current = v;
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target]);
+
+  return display;
 }
 
 export function CostCalculator() {
@@ -50,34 +102,50 @@ export function CostCalculator() {
   const [giorni, setGiorni] = useState(2);
 
   const { scoperto, costoSbagliate, tempo, totale } = useMemo(() => {
-    const scoperto = (ral * 1.5) / 12 * mesi;
+    const scoperto = ((ral * 1.5) / 12) * mesi;
     const costoSbagliate = sbagliate * ral * 0.35;
     const tempo = giorni * 12 * 500;
-    return { scoperto, costoSbagliate, tempo, totale: scoperto + costoSbagliate + tempo };
+    return {
+      scoperto,
+      costoSbagliate,
+      tempo,
+      totale: scoperto + costoSbagliate + tempo,
+    };
   }, [ral, mesi, sbagliate, giorni]);
+
+  const animato = useCountUp(totale);
+
+  const voci = [
+    { label: "Ruolo scoperto", value: scoperto, color: "bg-danger" },
+    { label: "Assunzioni sbagliate", value: costoSbagliate, color: "bg-brand" },
+    { label: "Il tuo tempo", value: tempo, color: "bg-ink/50" },
+  ];
+  const somma = totale || 1;
 
   return (
     <div id="calcolatore" className="rounded-2xl border border-hairline bg-white p-6 sm:p-10">
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="space-y-6">
-          <Slider
+        <div className="space-y-7">
+          <Field
             label="RAL media dei ruoli che cerchi"
             value={ral}
             min={25000}
             max={80000}
-            step={5000}
+            step={1000}
+            suffix="€"
             format={eur}
             onChange={setRal}
           />
-          <Slider
+          <Field
             label="Mesi in cui l'ultima posizione è rimasta scoperta"
             value={mesi}
             min={1}
             max={12}
+            suffix="mesi"
             format={(v) => `${v} ${v === 1 ? "mese" : "mesi"}`}
             onChange={setMesi}
           />
-          <Slider
+          <Field
             label="Assunzioni sbagliate negli ultimi 2 anni"
             value={sbagliate}
             min={0}
@@ -85,38 +153,69 @@ export function CostCalculator() {
             format={(v) => `${v}`}
             onChange={setSbagliate}
           />
-          <Slider
+          <Field
             label="Giorni al mese che dedichi a CV e colloqui"
             value={giorni}
             min={0}
             max={6}
+            suffix="gg"
             format={(v) => `${v} ${v === 1 ? "giorno" : "giorni"}`}
             onChange={setGiorni}
           />
         </div>
 
-        <div className="flex flex-col justify-center rounded-2xl bg-surface p-6 text-center">
+        <div className="flex flex-col justify-center rounded-2xl bg-surface p-6 text-center sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-ink-soft">
             Costo nascosto annuo
           </p>
-          <p className="display mt-2 text-[56px] leading-[1.05] font-extrabold text-danger sm:text-[72px]">
-            {eur(totale)}
+          <p
+            aria-live="polite"
+            className="display mt-3 text-[64px] leading-[0.95] font-extrabold tracking-tight text-danger sm:text-[92px]"
+          >
+            {eur(animato)}
           </p>
-          <div className="mt-6 space-y-1 text-left text-sm text-ink-soft">
-            <div className="flex justify-between"><span>Ruolo scoperto</span><span>{eur(scoperto)}</span></div>
-            <div className="flex justify-between"><span>Assunzioni sbagliate</span><span>{eur(costoSbagliate)}</span></div>
-            <div className="flex justify-between"><span>Il tuo tempo</span><span>{eur(tempo)}</span></div>
+
+          {/* Composizione visiva della somma */}
+          <div className="mt-6 flex h-3 w-full overflow-hidden rounded-full bg-hairline">
+            {voci.map((v) => (
+              <div
+                key={v.label}
+                className={`${v.color} h-full transition-all duration-500`}
+                style={{ width: `${(v.value / somma) * 100}%` }}
+              />
+            ))}
           </div>
+
+          <div className="mt-5 space-y-2 text-left text-sm text-ink-soft">
+            {voci.map((v) => (
+              <div key={v.label} className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${v.color}`} />
+                  <span className="truncate">{v.label}</span>
+                </span>
+                <span className="shrink-0 font-semibold text-ink">+ {eur(v.value)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between gap-3 border-t border-hairline pt-2 text-base">
+              <span className="font-semibold text-ink">Totale</span>
+              <span className="font-extrabold text-danger">{eur(totale)}</span>
+            </div>
+          </div>
+
+          <a
+            href="/check-up"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-4 text-base font-semibold text-white shadow-[0_6px_20px_-8px_rgba(107,33,255,0.4)] transition-colors hover:bg-brand-dark"
+          >
+            Voglio capire come ridurlo →
+          </a>
+          <p className="mt-3 text-xs text-ink-soft">
+            Nessuna newsletter · Nessun impegno · Rispondo io, non un commerciale
+          </p>
+
           <p className="mt-6 text-left text-sm text-ink-soft">
             Questo numero non lo vedi in bilancio. Ma c'è. Ed è prudente: non include i
             clienti persi, gli errori di chi copre due ruoli, il morale del team.
           </p>
-          <a
-            href="/check-up"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-brand-dark"
-          >
-            Voglio capire come ridurlo →
-          </a>
         </div>
       </div>
     </div>
