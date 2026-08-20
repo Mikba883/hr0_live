@@ -83,7 +83,7 @@ function CostoPage() {
       </AnnouncementBar>
 
       {/* Hero */}
-      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-20 sm:pt-32 sm:pb-28">
+      <section id="hero" className="relative overflow-hidden px-5 pt-20 pb-14 sm:pt-32 sm:pb-20">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,rgba(107,33,255,0.08),transparent_65%)]"
