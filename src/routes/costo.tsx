@@ -152,7 +152,6 @@ function CostoPage() {
         <div className="mt-8">
           <CostCalculator />
         </div>
-        <CtaBlock />
       </Section>
 
       {/* Chi fa il check-up (compatto) */}
