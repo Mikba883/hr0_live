@@ -17,6 +17,7 @@ import { Footer } from "@/components/landing/Footer";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
+import { ScratchReveal } from "@/components/landing/ScratchReveal";
 
 export const Route = createFileRoute("/costo")({
   head: () => ({
