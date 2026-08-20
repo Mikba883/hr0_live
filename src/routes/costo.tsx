@@ -124,20 +124,20 @@ function CostoPage() {
             <div className="absolute -inset-3 rotate-3 rounded-[28px] bg-info-bg" aria-hidden />
             <div className="relative overflow-hidden rounded-[24px] border border-hairline bg-white shadow-[0_24px_60px_-30px_rgba(20,20,40,0.35)]">
               <img
-                src="/Photo.png"
-                alt="Michele Baroni, consulente HR per PMI"
-                className="aspect-[4/5] w-full object-cover"
+                src="/calculator-hero.png"
+                alt="Calcolatore del costo nascosto delle assunzioni"
+                className="aspect-square w-full object-cover"
               />
               <div className="border-t border-hairline p-5">
-                <p className="text-sm font-semibold text-ink">Michele Baroni</p>
+                <p className="text-sm font-semibold text-ink">Il tuo costo nascosto</p>
                 <p className="mt-1 text-sm text-ink-soft">
-                  Il check-up lo faccio io, di persona. Non un commerciale.
+                  In 30 minuti trasformiamo i numeri della tua azienda in una stima concreta.
                 </p>
               </div>
             </div>
             <div className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-hairline bg-white px-4 py-3 shadow-lg sm:block">
-              <p className="display text-2xl text-danger">4 mesi</p>
-              <p className="text-xs text-ink-soft">di ruolo scoperto, in media</p>
+              <p className="display text-2xl text-danger">18.000€</p>
+              <p className="text-xs text-ink-soft">per ogni assunzione sbagliata</p>
             </div>
           </div>
         </div>
