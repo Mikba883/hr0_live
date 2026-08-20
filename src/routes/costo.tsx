@@ -171,7 +171,7 @@ function CostoPage() {
       <Section className="bg-white border-t border-hairline">
         <div className="grid gap-10 md:grid-cols-[3fr_2fr] md:items-center">
           <div>
-            <H2>Non è colpa tua. È che nessuno ti ha mai dato un metodo.</H2>
+            <H2>Non è un limite tuo: serve solo un metodo per assumere bene.</H2>
             <div className="mt-6 space-y-4 text-lg text-ink-soft">
               <p>
                 Il 90% delle PMI assume così: passaparola, un annuncio online,
