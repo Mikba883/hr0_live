@@ -159,7 +159,16 @@ function CostoPage() {
         </div>
       </Section>
 
-
+      {/* Logo aziende */}
+      <Section className="bg-info-bg border-t border-hairline !py-14 sm:!py-16">
+        <div className="text-center">
+          <Eyebrow>Social proof</Eyebrow>
+          <H2 className="text-ink">Aziende che hanno già usato questo metodo</H2>
+        </div>
+        <div className="mt-8">
+          <LogoCloud label="Aziende con cui ho lavorato" size="lg" />
+        </div>
+      </Section>
 
       {/* Agitazione */}
       <Section className="bg-white border-t border-hairline">
