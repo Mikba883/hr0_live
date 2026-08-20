@@ -17,7 +17,7 @@ import { Footer } from "@/components/landing/Footer";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
-import { ScratchReveal } from "@/components/landing/ScratchReveal";
+import { BlurReveal } from "@/components/landing/BlurReveal";
 
 export const Route = createFileRoute("/costo")({
   head: () => ({
@@ -137,14 +137,14 @@ function CostoPage() {
               </div>
             </div>
             <div className="absolute -bottom-5 -left-4 hidden w-56 sm:block">
-              <ScratchReveal value="18.000€" label="per ogni assunzione sbagliata" />
+              <BlurReveal value="18.000€" label="per ogni assunzione sbagliata" />
             </div>
           </div>
         </div>
       </section>
 
       {/* Calcolatore */}
-      <Section>
+      <Section id="calcolatore">
         <H2>Fai due conti, adesso</H2>
         <p className="mt-4 max-w-2xl text-lg text-ink-soft">
           Non fidarti di me. Fidati dei tuoi numeri. Muovi i cursori:
