@@ -17,6 +17,7 @@ import { Footer } from "@/components/landing/Footer";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
+import { ScratchReveal } from "@/components/landing/ScratchReveal";
 
 export const Route = createFileRoute("/costo")({
   head: () => ({
@@ -135,9 +136,8 @@ function CostoPage() {
                 </p>
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-hairline bg-white px-4 py-3 shadow-lg sm:block">
-              <p className="display text-2xl text-danger">18.000€</p>
-              <p className="text-xs text-ink-soft">per ogni assunzione sbagliata</p>
+            <div className="absolute -bottom-5 -left-4 hidden w-56 sm:block">
+              <ScratchReveal value="18.000€" label="per ogni assunzione sbagliata" />
             </div>
           </div>
         </div>
