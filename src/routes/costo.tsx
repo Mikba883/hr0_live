@@ -1,4 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  Check,
+  Target,
+  MessagesSquare,
+  BadgeEuro,
+  Workflow,
+  ShieldCheck,
+  PiggyBank,
+} from "lucide-react";
 import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CostCalculator } from "@/components/landing/CostCalculator";
 import { CtaButton } from "@/components/landing/CtaButton";
@@ -23,9 +32,9 @@ export const Route = createFileRoute("/costo")({
 });
 
 const errori = [
-  { t: "Cercare «un commerciale» invece di competenze precise", d: "Arrivano CV fuori target." },
-  { t: "Colloqui-chiacchierata invece di interviste strutturate", d: "Si assume chi piace, non chi rende." },
-  { t: "Offerta a occhio invece che sui valori di mercato", d: "Il candidato buono rifiuta, o accetta e se ne va." },
+  { icon: <Target />, t: "Cerchi «un commerciale», non competenze", d: "Arrivano CV fuori target." },
+  { icon: <MessagesSquare />, t: "Colloqui-chiacchierata", d: "Assumi chi ti piace, non chi rende." },
+  { icon: <BadgeEuro />, t: "Offerta fatta a occhio", d: "Il candidato buono rifiuta. O accetta e se ne va." },
 ];
 
 const passi = [
@@ -35,9 +44,15 @@ const passi = [
 ];
 
 const fiducia = [
-  { t: "Lavoro sul metodo, non sui CV a mucchi", d: "Job description a competenze, colloqui strutturati, valutazione oggettiva con scorecard. Il processo che usano le multinazionali, tarato sulla tua PMI." },
-  { t: "Garanzia di sostituzione", d: "Se il candidato inserito lascia entro 6 mesi, riattivo la ricerca senza costi aggiuntivi. Il rischio non è sulle tue spalle." },
-  { t: "Formazione quasi a costo zero", d: "La componente formativa dei miei percorsi è finanziabile con i Fondi Interprofessionali. Soldi che la tua azienda ha già versato e che quasi certamente non sta usando." },
+  { icon: <Workflow />, t: "Metodo, non CV a mucchi", d: "Job description a competenze, colloqui strutturati, scorecard.", highlight: false },
+  { icon: <ShieldCheck />, t: "Garanzia di sostituzione", d: "Se la persona lascia entro 6 mesi, riattivo la ricerca senza costi. Il rischio non è sulle tue spalle.", highlight: true },
+  { icon: <PiggyBank />, t: "Formazione quasi a costo zero", d: "Finanziabile con i Fondi Interprofessionali che già versi.", highlight: false },
+];
+
+const bioBadges = [
+  "11+ anni in HR, selezione e organizzazione",
+  "Collaborato con +24 realtà aziendali",
+  "Garanzia di sostituzione su ogni inserimento",
 ];
 
 const faq = [
@@ -46,6 +61,17 @@ const faq = [
   { q: "Faccio già col passaparola e funziona.", a: "Il passaparola non è gratis: lo paghi nei mesi di ruolo scoperto e nelle assunzioni sbagliate. Il check-up ti dice esattamente quanto. Poi decidi tu se è un prezzo accettabile." },
   { q: "Ho già provato con un'agenzia, malissimo.", a: "Ottimo, allora sai già cosa NON vuoi. Io non ti mando CV a mucchi: ti do un metodo e, se serve, lo eseguo con te." },
 ];
+
+function CtaBlock({ dark = false }: { dark?: boolean }) {
+  return (
+    <div className="mx-auto mt-12 flex max-w-md flex-col items-center gap-3">
+      <CtaButton href="/check-up">Prenota il check-up gratuito</CtaButton>
+      <p className={`text-center text-sm ${dark ? "text-white/60" : "text-ink-soft"}`}>
+        Nessuna newsletter · Nessun impegno · Rispondo io, non un commerciale
+      </p>
+    </div>
+  );
+}
 
 function CostoPage() {
   return (
@@ -90,6 +116,7 @@ function CostoPage() {
         <div className="mt-8">
           <CostCalculator />
         </div>
+        <CtaBlock />
       </Section>
 
       {/* Agitazione */}
@@ -138,9 +165,9 @@ function CostoPage() {
             </div>
           </div>
         </div>
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-14 grid gap-5 md:grid-cols-3">
           {errori.map((e) => (
-            <Card key={e.t} title={e.t}>{e.d}</Card>
+            <Card key={e.t} title={e.t} icon={e.icon}>{e.d}</Card>
           ))}
         </div>
       </Section>
@@ -167,16 +194,20 @@ function CostoPage() {
           «Alla fine della call hai i tuoi numeri nero su bianco. Sono tuoi, te
           li tieni comunque — che lavoriamo insieme o no.»
         </blockquote>
+        <CtaBlock />
       </Section>
 
       {/* Fiducia */}
       <Section className="bg-white border-t border-hairline">
         <H2>Non sono un'agenzia. E questo cambia tutto.</H2>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
           {fiducia.map((f) => (
-            <Card key={f.t} title={f.t}>{f.d}</Card>
+            <Card key={f.t} title={f.t} icon={f.icon} highlight={f.highlight}>
+              {f.d}
+            </Card>
           ))}
         </div>
+        <CtaBlock />
       </Section>
 
       {/* FAQ */}
@@ -184,6 +215,44 @@ function CostoPage() {
         <H2>Le domande che ti stai facendo</H2>
         <div className="mt-8">
           <Faq items={faq} />
+        </div>
+      </Section>
+
+      {/* Chi sono (compatto) */}
+      <Section className="bg-white border-t border-hairline">
+        <H2>Chi fa il check-up</H2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-[160px_1fr] sm:items-center">
+          <div className="relative mx-auto w-full max-w-[160px]">
+            <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
+            <img
+              src="/Photo.png"
+              alt="Michele Baroni, consulente HR per PMI"
+              loading="lazy"
+              className="relative aspect-square w-full rounded-2xl object-cover"
+            />
+          </div>
+          <div className="space-y-3 text-lg text-ink-soft">
+            <p>
+              Sono <span className="font-semibold text-ink">Michele Baroni</span>: 11 anni
+              tra <span className="font-semibold text-ink">Accenture</span> e ricerche di
+              personale come partner freelance di{" "}
+              <span className="font-semibold text-ink">Bain &amp; Company</span>.
+            </p>
+            <p>
+              Oggi porto quel metodo nelle PMI — e il check-up lo faccio io, di persona.
+            </p>
+          </div>
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          {bioBadges.map((b) => (
+            <div
+              key={b}
+              className="flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-3 text-sm font-semibold text-ink"
+            >
+              <Check className="h-4 w-4 shrink-0 text-brand" />
+              <span>{b}</span>
+            </div>
+          ))}
         </div>
       </Section>
 
@@ -196,12 +265,7 @@ function CostoPage() {
             personalmente e li preparo uno per uno.
           </p>
         </div>
-        <div className="mx-auto mt-10 flex max-w-md flex-col items-center gap-4">
-          <CtaButton href="/check-up">Prenota il tuo check-up gratuito →</CtaButton>
-          <p className="text-sm text-white/60">
-            2 minuti di survey · Ti richiamo entro 48 ore
-          </p>
-        </div>
+        <CtaBlock dark />
       </Section>
 
       <Footer />
