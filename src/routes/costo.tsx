@@ -15,6 +15,7 @@ import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
+import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 
 export const Route = createFileRoute("/costo")({
@@ -119,6 +120,47 @@ function CostoPage() {
         <CtaBlock />
       </Section>
 
+      {/* Chi fa il check-up (compatto) */}
+      <Section className="bg-white border-t border-hairline !py-14 sm:!py-16">
+        <div className="rounded-2xl border border-hairline bg-surface p-6 sm:p-9">
+          <div className="grid gap-6 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-center sm:gap-8">
+            <div className="relative mx-auto w-full max-w-[140px]">
+              <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
+              <img
+                src="/Photo.png"
+                alt="Michele Baroni, consulente HR per PMI"
+                loading="lazy"
+                className="relative aspect-square w-full rounded-2xl object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <Eyebrow>Chi fa il check-up</Eyebrow>
+              <p className="text-lg text-ink-soft">
+                Sono <span className="font-semibold text-ink">Michele Baroni</span>: 11 anni
+                tra <span className="font-semibold text-ink">Accenture</span> e ricerche di
+                personale come partner freelance di{" "}
+                <span className="font-semibold text-ink">Bain &amp; Company</span>. Oggi porto
+                quel metodo nelle PMI — e il check-up lo faccio io, di persona.
+              </p>
+              <ul className="mt-5 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {bioBadges.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-sm font-semibold text-ink">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-hairline pt-8">
+            <LogoCloud label="Aziende con cui ho lavorato" />
+          </div>
+        </div>
+      </Section>
+
+
+
       {/* Agitazione */}
       <Section className="bg-white border-t border-hairline">
         <div className="grid gap-10 md:grid-cols-[3fr_2fr] md:items-center">
@@ -218,43 +260,8 @@ function CostoPage() {
         </div>
       </Section>
 
-      {/* Chi sono (compatto) */}
-      <Section className="bg-white border-t border-hairline">
-        <H2>Chi fa il check-up</H2>
-        <div className="mt-8 grid gap-6 sm:grid-cols-[160px_1fr] sm:items-center">
-          <div className="relative mx-auto w-full max-w-[160px]">
-            <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
-            <img
-              src="/Photo.png"
-              alt="Michele Baroni, consulente HR per PMI"
-              loading="lazy"
-              className="relative aspect-square w-full rounded-2xl object-cover"
-            />
-          </div>
-          <div className="space-y-3 text-lg text-ink-soft">
-            <p>
-              Sono <span className="font-semibold text-ink">Michele Baroni</span>: 11 anni
-              tra <span className="font-semibold text-ink">Accenture</span> e ricerche di
-              personale come partner freelance di{" "}
-              <span className="font-semibold text-ink">Bain &amp; Company</span>.
-            </p>
-            <p>
-              Oggi porto quel metodo nelle PMI — e il check-up lo faccio io, di persona.
-            </p>
-          </div>
-        </div>
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {bioBadges.map((b) => (
-            <div
-              key={b}
-              className="flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-3 text-sm font-semibold text-ink"
-            >
-              <Check className="h-4 w-4 shrink-0 text-brand" />
-              <span>{b}</span>
-            </div>
-          ))}
-        </div>
-      </Section>
+
+
 
       {/* CTA finale */}
       <Section className="bg-ink">
