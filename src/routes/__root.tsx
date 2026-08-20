@@ -88,10 +88,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "icon", href: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
-      { rel: "manifest", href: "/site.webmanifest" },
+      // Il `?v=2` non è un vezzo: per mesi allo stesso identico indirizzo
+      // (/favicon.ico) è stata servita l'icona di Lovable, e le favicon
+      // finiscono in una cache del browser che il ricaricamento normale non
+      // tocca. Finché l'URL resta uguale continua a comparire il cuore
+      // arancione anche a file sostituito. Cambiando la stringa cambia la
+      // chiave della cache. Se un domani cambi logo, alza il numero.
+      { rel: "icon", href: "/favicon-96x96.png?v=2", type: "image/png", sizes: "96x96" },
+      { rel: "icon", href: "/favicon.svg?v=2", type: "image/svg+xml" },
+      { rel: "shortcut icon", href: "/favicon.ico?v=2" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2", sizes: "180x180" },
+      { rel: "manifest", href: "/site.webmanifest?v=2" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

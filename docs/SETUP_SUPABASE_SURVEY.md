@@ -9,7 +9,7 @@ va incollato a mano una volta sola.
 
 - Progetto: `hr0` — project ID `uqmznxisgcaljifwbbnq` (regione `eu-central-1`)
 - Tabella: `public.survey_responses`
-- Codice che scrive: `src/routes/check-up.tsx` → `supabase.from("survey_responses").insert(...)`
+- Codice che scrive: `src/routes/check-up.tsx` → `salvaCheckUp()` in `src/lib/checkup.ts`
 
 ---
 
@@ -89,7 +89,9 @@ create index if not exists survey_responses_created_at_idx
   on public.survey_responses (created_at desc);
 
 -- 4. Permessi Data API (PostgREST)
-grant insert on public.survey_responses to anon;
+--    Anche `authenticated`: se apri il check-up nello stesso browser in cui sei
+--    loggato su /admin, senza questo permesso la tua prova verrebbe rifiutata.
+grant insert on public.survey_responses to anon, authenticated;
 grant all on public.survey_responses to service_role;
 
 -- 5. Sicurezza: chiunque può inviare il form, nessuno può leggere i lead dall'esterno
@@ -99,7 +101,7 @@ drop policy if exists "public can insert survey" on public.survey_responses;
 create policy "public can insert survey"
   on public.survey_responses
   for insert
-  to anon
+  to anon, authenticated
   with check (true);
 ```
 
@@ -121,8 +123,23 @@ pagina `/grazie` senza errori, la riga è salvata. Torna sul Table Editor e prem
 **Refresh**: la vedi in cima.
 
 Se invece compare il messaggio _"Non sono riuscito a salvare le tue risposte"_, la
-scrittura è fallita — apri la console del browser (F12), l'errore esatto di Supabase è
-loggato lì.
+scrittura è fallita: sotto al messaggio c'è la **riga tecnica** che dice quale dei
+guasti qui sotto è, e la stessa riga finisce nella console del browser (F12).
+
+| Cosa leggi nella riga tecnica | Cosa fare |
+| --- | --- |
+| `PGRST205 · Could not find the table` | La tabella non esiste: esegui lo SQL del punto 1. |
+| `PGRST204` / `column ... does not exist` | Allo schema manca una colonna: rilancia lo SQL del punto 1. |
+| `42501` / `row-level security` | Mancano permesso o policy di insert: rilancia lo SQL del punto 1. |
+| `Invalid API key` | La chiave pubblica su quell'ambiente è sbagliata o scaduta. |
+| `Mancano VITE_SUPABASE_URL o VITE_SUPABASE_PUBLISHABLE_KEY` | Le variabili non sono impostate sull'ambiente pubblicato (vedi in fondo). |
+
+> **Il form scrive sempre come visitatore anonimo.** `src/lib/checkup.ts` chiama la Data
+> API con la sola chiave pubblica invece di usare il client condiviso di
+> `src/lib/supabase.ts`. Quel client tiene in memoria la sessione di chi ha fatto login
+> su `/admin` e la allegherebbe anche a questa scrittura: la riga arriverebbe a Postgres
+> come utente `authenticated` mentre la policy qui sopra parla di `anon`, e il check-up
+> risulterebbe rotto solo per te, solo nel browser in cui sei loggato.
 
 ### Controllo dal terminale
 
@@ -175,8 +192,8 @@ order by created_at desc;
 
 ## Variabili d'ambiente
 
-Il client (`src/lib/supabase.ts`) legge due variabili dal `.env`, che **non** viene
-committato:
+Sia il form (`src/lib/checkup.ts`) sia l'area riservata (`src/lib/supabase.ts`) leggono
+due variabili dal `.env`, che **non** viene committato:
 
 ```
 VITE_SUPABASE_URL=https://uqmznxisgcaljifwbbnq.supabase.co
@@ -184,4 +201,5 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
 ```
 
 Le trovi in **Project Settings → API Keys**. Ricordati di impostarle anche
-sull'ambiente di produzione (Lovable), altrimenti il sito pubblicato parte in errore.
+sull'ambiente di produzione (Lovable): senza, `/admin` non parte proprio e il check-up
+si compila ma non salva, dicendotelo nella riga tecnica sotto l'errore.
