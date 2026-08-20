@@ -158,16 +158,7 @@ function CostoPage() {
       {/* Chi fa il check-up (compatto) */}
       <Section className="bg-white border-t border-hairline !py-14 sm:!py-16">
         <div className="rounded-2xl border border-hairline bg-surface p-6 sm:p-9">
-          <div className="grid gap-6 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-center sm:gap-8">
-            <div className="relative mx-auto w-full max-w-[140px]">
-              <div className="absolute -inset-2 rotate-2 rounded-2xl bg-info-bg" aria-hidden />
-              <img
-                src="/Photo.png"
-                alt="Michele Baroni, consulente HR per PMI"
-                loading="lazy"
-                className="relative aspect-square w-full rounded-2xl object-cover"
-              />
-            </div>
+          <div className="grid gap-6 sm:gap-8">
             <div className="min-w-0">
               <Eyebrow>Chi fa il check-up</Eyebrow>
               <p className="text-lg text-ink-soft">
