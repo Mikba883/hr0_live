@@ -4,14 +4,17 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { CookieBanner } from "../components/CookieBanner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { loadGoogleAds } from "../lib/google-ads";
+import { getConsentSnapshot, hydrateConsent } from "../lib/consent";
+import { applyAdsConsent, initConsentMode } from "../lib/google-ads";
 
 function NotFoundComponent() {
   return (
@@ -99,12 +102,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "shortcut icon", href: "/favicon.ico?v=2" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=2", sizes: "180x180" },
       { rel: "manifest", href: "/site.webmanifest?v=2" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap",
-      },
+      // I font sono serviti da noi (public/fonts, vedi src/fonts.css): caricarli
+      // da fonts.googleapis.com mandava a Google l'IP di ogni visitatore prima
+      // di qualunque consenso. Per aggiornarli: bun scripts/fetch-fonts.ts
     ],
   }),
   shellComponent: RootShell,
@@ -129,17 +129,35 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // L'area riservata è privata e noindex: non ha senso mandarne le visite a
+  // Google Ads, e senza tracciamento non c'è consenso da chiedere.
+  const areaRiservata = pathname.startsWith("/admin");
 
   useEffect(() => {
-    // L'area riservata è privata e noindex: non ha senso mandarne le visite
-    // a Google Ads.
+    // Prima i segnali di consenso negati, poi tutto il resto: devono trovarsi
+    // nel dataLayer prima che gtag.js possa girare, altrimenti il tag parte in
+    // stato consentito.
+    initConsentMode();
+    hydrateConsent();
+
+    // Qui si legge `window.location` e non `pathname`: questo effetto gira una
+    // volta sola all'avvio, e il tag va deciso in base alla pagina d'ingresso.
+    // `pathname` serve invece al render del banner, che deve seguire le
+    // navigazioni.
     if (window.location.pathname.startsWith("/admin")) return;
-    loadGoogleAds();
+
+    // Chi ha già scelto non rivede il banner: applichiamo la sua decisione.
+    // Senza decisione, `false` non carica niente (o carica il tag in stato
+    // negato, se il consenso è configurato in modalità avanzata).
+    applyAdsConsent(getConsentSnapshot().decision?.marketing ?? false);
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      {areaRiservata ? null : <CookieBanner />}
     </QueryClientProvider>
   );
 }
