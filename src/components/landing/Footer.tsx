@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { openConsentPreferences } from "@/lib/consent";
+import { GA4_ID } from "@/lib/analytics";
 import { GOOGLE_ADS_ID } from "@/lib/google-ads";
 
 export function Footer() {
@@ -16,10 +17,10 @@ export function Footer() {
               stato dato: senza questo link il banner sarebbe una porta a senso
               unico, e la Cookie Policy prometterebbe una cosa che non esiste.
 
-              Senza ID di conversione non c'è nessun tag da autorizzare e il
-              banner non compare: mostrare il link aprirebbe il vuoto.
+              Senza nessuno strumento opzionale configurato non c'è niente da
+              autorizzare e il banner non compare: il link aprirebbe il vuoto.
             */}
-            {GOOGLE_ADS_ID ? (
+            {GOOGLE_ADS_ID || GA4_ID ? (
               <button
                 type="button"
                 onClick={openConsentPreferences}

@@ -25,6 +25,8 @@ export function useConsent() {
     decision,
     /** Il consenso al marketing è dato. */
     marketing: decision?.marketing ?? false,
+    /** Il consenso alle statistiche è dato. */
+    analytics: decision?.analytics ?? false,
     /** Serve una scelta, o l'utente ha riaperto le preferenze. */
     shouldAsk: decision === null || reopened,
     /** Il pannello è stato riaperto da chi aveva già scelto. */

@@ -14,7 +14,9 @@ import appCss from "../styles.css?url";
 import { CookieBanner } from "../components/CookieBanner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { getConsentSnapshot, hydrateConsent } from "../lib/consent";
-import { applyAdsConsent, initConsentMode } from "../lib/google-ads";
+import { applyAnalyticsConsent } from "../lib/analytics";
+import { applyAdsConsent } from "../lib/google-ads";
+import { initConsentMode } from "../lib/gtag";
 
 function NotFoundComponent() {
   return (
@@ -149,9 +151,11 @@ function RootComponent() {
     if (window.location.pathname.startsWith("/admin")) return;
 
     // Chi ha già scelto non rivede il banner: applichiamo la sua decisione.
-    // Senza decisione, `false` non carica niente (o carica il tag in stato
+    // Senza decisione, `false` non carica niente (o carica il tag Ads in stato
     // negato, se il consenso è configurato in modalità avanzata).
-    applyAdsConsent(getConsentSnapshot().decision?.marketing ?? false);
+    const decisione = getConsentSnapshot().decision;
+    applyAdsConsent(decisione?.marketing ?? false);
+    applyAnalyticsConsent(decisione?.analytics ?? false);
   }, []);
 
   return (

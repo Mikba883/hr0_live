@@ -167,7 +167,7 @@ function PrivacyPage() {
               <li>piattaforma di prenotazione appuntamenti;</li>
               <li>piattaforma di email marketing;</li>
               <li>consulenti fiscali, contabili e legali;</li>
-              <li>Google Ireland Ltd., per la sola misurazione delle conversioni delle campagne pubblicitarie e previo consenso dell'interessato.</li>
+              <li>Google Ireland Ltd., per la misurazione delle conversioni delle campagne pubblicitarie e per le statistiche di utilizzo del sito, in entrambi i casi previo consenso dell'interessato e limitatamente alle categorie che ha accettato.</li>
             </ul>
             <p className="mt-3">
               I dati non sono in alcun caso diffusi né ceduti a terzi per finalità di marketing autonomo.

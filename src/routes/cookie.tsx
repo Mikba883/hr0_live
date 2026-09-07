@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Footer } from "@/components/landing/Footer";
 import { openConsentPreferences } from "@/lib/consent";
+import { GA4_ID } from "@/lib/analytics";
 import { GOOGLE_ADS_ID } from "@/lib/google-ads";
 
 export const Route = createFileRoute("/cookie")({
@@ -56,9 +57,23 @@ function CookiePage() {
             </p>
 
             <h3 className="mt-8 text-lg font-semibold text-ink">2.2 Cookie analitici</h3>
-            <p className="mt-3">
-              <strong className="text-ink">Questo sito non utilizza strumenti di analisi statistica.</strong> Non è installato Google Analytics né alcuna piattaforma equivalente. La presente sezione è mantenuta per completezza: qualora in futuro venisse introdotto uno strumento analitico, la tabella al punto 3 e il banner verrebbero aggiornati di conseguenza e il consenso richiesto nuovamente.
-            </p>
+            {GA4_ID ? (
+              <>
+                <p className="mt-3">
+                  Servono a raccogliere informazioni sul modo in cui il sito viene utilizzato. Essendo forniti da un soggetto terzo (Google Analytics 4), non sono equiparabili ai cookie tecnici e <strong className="text-ink">richiedono il consenso preventivo</strong>, che può essere negato o revocato senza alcuna conseguenza sulla fruizione del sito.
+                </p>
+                <p className="mt-3">
+                  Oltre alle pagine visitate, con il consenso vengono registrati alcuni eventi di interazione, sempre in forma aggregata e mai riconducibili a un singolo visitatore identificato: quanto si scorre una pagina, quali pulsanti di invito all'azione vengono premuti, l'avvio e la pausa del video di presentazione, le regolazioni del calcolatore dei costi e l'avanzamento fra le domande del check-up, compresi i punti in cui la compilazione si interrompe.
+                </p>
+                <p className="mt-3">
+                  La finalità è esclusivamente diagnostica: capire quali contenuti non funzionano e dove il questionario risulta troppo lungo. <strong className="text-ink">Questi dati non vengono usati per profilare l'utente né per inviargli pubblicità</strong>; il trattamento a fini pubblicitari è quello descritto al punto 2.3, per il quale il consenso è distinto.
+                </p>
+              </>
+            ) : (
+              <p className="mt-3">
+                <strong className="text-ink">Questo sito non utilizza strumenti di analisi statistica.</strong> Non è installato Google Analytics né alcuna piattaforma equivalente. La presente sezione è mantenuta per completezza: qualora in futuro venisse introdotto uno strumento analitico, la tabella al punto 3 e il banner verrebbero aggiornati di conseguenza e il consenso richiesto nuovamente.
+              </p>
+            )}
 
             <h3 className="mt-8 text-lg font-semibold text-ink">2.3 Cookie di profilazione e marketing</h3>
             <p className="mt-3">
@@ -103,6 +118,44 @@ function CookiePage() {
                 </tbody>
               </table>
             </div>
+
+            {GA4_ID ? (
+              <>
+                <h3 className="mt-8 text-base font-semibold text-ink">
+                  Cookie analitici di terza parte — previo consenso
+                </h3>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[640px] border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-hairline text-left">
+                        <th className="py-3 pr-4 font-semibold text-ink">Nome</th>
+                        <th className="py-3 pr-4 font-semibold text-ink">Fornitore</th>
+                        <th className="py-3 pr-4 font-semibold text-ink">Finalità</th>
+                        <th className="py-3 pr-4 font-semibold text-ink">Durata</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-hairline">
+                        <td className="py-3 pr-4 align-top font-mono text-xs">_ga</td>
+                        <td className="py-3 pr-4 align-top">Google Ireland Ltd.</td>
+                        <td className="py-3 pr-4 align-top">
+                          Distingue i visitatori assegnando un identificativo casuale al dispositivo
+                        </td>
+                        <td className="py-3 pr-4 align-top">2 anni</td>
+                      </tr>
+                      <tr className="border-b border-hairline">
+                        <td className="py-3 pr-4 align-top font-mono text-xs">_ga_*</td>
+                        <td className="py-3 pr-4 align-top">Google Ireland Ltd.</td>
+                        <td className="py-3 pr-4 align-top">
+                          Mantiene lo stato della sessione per la specifica proprietà Analytics
+                        </td>
+                        <td className="py-3 pr-4 align-top">2 anni</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : null}
 
             <h3 className="mt-8 text-base font-semibold text-ink">
               Cookie di profilazione di terza parte — previo consenso
@@ -245,7 +298,7 @@ function CookiePage() {
               È possibile modificare o revocare in qualsiasi momento le preferenze espresse tramite il link <strong className="text-ink">"Preferenze cookie"</strong> presente nel footer del sito, oppure con il pulsante qui sotto. La revoca non pregiudica la liceità del trattamento effettuato prima della revoca stessa.
             </p>
 
-            {GOOGLE_ADS_ID ? (
+            {GOOGLE_ADS_ID || GA4_ID ? (
               <div className="mt-5">
                 <button
                   type="button"

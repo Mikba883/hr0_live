@@ -9,6 +9,7 @@ import { ProcessTimeline } from "@/components/landing/ProcessTimeline";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 import { VideoEmbed } from "@/components/landing/VideoEmbed";
+import { useScrollDepth } from "@/hooks/use-scroll-depth";
 
 export const Route = createFileRoute("/metodo")({
   head: () => ({
@@ -57,6 +58,8 @@ const faq = [
 ];
 
 function MetodoPage() {
+  useScrollDepth("metodo");
+
   return (
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">

@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+
+import { trackEvent } from "@/lib/analytics";
 import { salvaCheckUp } from "@/lib/checkup";
 
 export const Route = createFileRoute("/check-up")({
@@ -277,13 +279,29 @@ function CheckUpPage() {
     return null;
   }, [q, state]);
 
+  /** Una sola `form_start` per compilazione, anche tornando indietro e avanti. */
+  const iniziato = useRef(false);
+
   const goNext = () => {
     if (currentError) {
       setTouched(true);
+      // Dove la gente sbatte contro la validazione: su un modulo di diciotto
+      // domande è il punto in cui si perde chi se ne va.
+      trackEvent("form_error", { passo: safeIndex + 1, domanda: q?.key, errore: currentError });
       return;
     }
     setTouched(false);
     setError(null);
+
+    if (!iniziato.current) {
+      iniziato.current = true;
+      // Quanti aprono il modulo si sa già dalle visite di pagina; questo dice
+      // quanti hanno risposto almeno una volta. La differenza fra i due è il
+      // costo della prima domanda.
+      trackEvent("form_start");
+    }
+    trackEvent("form_step", { passo: safeIndex + 1, totale: total, domanda: q?.key });
+
     if (safeIndex >= total - 1) {
       void submit();
     } else {
@@ -339,9 +357,13 @@ function CheckUpPage() {
     setSubmitting(false);
     if (!esito.ok) {
       console.error("Check-up non salvato:", esito.dettaglio);
+      // Un invio fallito è un lead perso in silenzio: senza questo evento non
+      // sapresti mai che è successo, perché chi lo subisce non te lo scrive.
+      trackEvent("form_submit_error", { dettaglio: esito.dettaglio });
       setError({ messaggio: esito.messaggio, dettaglio: esito.dettaglio });
       return;
     }
+    trackEvent("form_submit");
     navigate({ to: "/grazie", search: { tel: state.telefono.trim() } as never });
   };
 

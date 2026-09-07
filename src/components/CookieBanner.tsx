@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from "react";
 
 import { useConsent } from "@/hooks/use-consent";
 import { closeConsentPreferences, hydrateConsent, saveConsent } from "@/lib/consent";
+import { applyAnalyticsConsent, GA4_ID } from "@/lib/analytics";
 import { applyAdsConsent, GOOGLE_ADS_ID } from "@/lib/google-ads";
 
 /**
@@ -21,12 +22,14 @@ import { applyAdsConsent, GOOGLE_ADS_ID } from "@/lib/google-ads";
  * - Nessuna casella è pre-spuntata: il consenso deve essere un atto positivo.
  */
 export function CookieBanner() {
-  const { shouldAsk, reopened, marketing } = useConsent();
+  const { shouldAsk, reopened, marketing, analytics } = useConsent();
   const [pronto, setPronto] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [marketingChecked, setMarketingChecked] = useState(false);
+  const [analyticsChecked, setAnalyticsChecked] = useState(false);
   const titleId = useId();
   const marketingId = useId();
+  const analyticsId = useId();
 
   /**
    * Legge la scelta salvata e solo allora sblocca il render.
@@ -49,24 +52,39 @@ export function CookieBanner() {
     if (!reopened) return;
     setShowDetails(true);
     setMarketingChecked(marketing);
-  }, [reopened, marketing]);
+    setAnalyticsChecked(analytics);
+  }, [reopened, marketing, analytics]);
 
   if (!pronto || !shouldAsk) return null;
 
-  // Senza ID di conversione configurato non viene caricato niente: chiedere il
-  // consenso per un tag che non esiste sarebbe solo un ostacolo in più.
-  if (!GOOGLE_ADS_ID) return null;
+  // Se non è configurato nessuno strumento opzionale non viene caricato
+  // niente: chiedere il consenso per tag che non esistono sarebbe solo un
+  // ostacolo in più.
+  if (!GOOGLE_ADS_ID && !GA4_ID) return null;
 
-  const decide = (accettato: boolean) => {
-    const revoca = reopened && marketing && !accettato;
-    saveConsent({ marketing: accettato });
-    applyAdsConsent(accettato);
+  /** Applica una scelta per categoria e la rende persistente. */
+  const decide = (scelta: { marketing: boolean; analytics: boolean }) => {
+    // Una categoria tolta dopo che era stata concessa: lo script è già in
+    // pagina e non si può disfare.
+    const revoca = reopened && ((marketing && !scelta.marketing) || (analytics && !scelta.analytics));
+
+    saveConsent(scelta);
+    applyAdsConsent(scelta.marketing);
+    applyAnalyticsConsent(scelta.analytics);
     setShowDetails(false);
 
-    // Uno script già eseguito non si può disfare: dopo una revoca ricarichiamo
-    // la pagina, così sparisce anche quello che il tag ha lasciato in memoria.
+    // Dopo una revoca ricarichiamo, così sparisce anche quello che i tag hanno
+    // lasciato in memoria.
     if (revoca) window.location.reload();
   };
+
+  const accettaTutto = () => decide({ marketing: !!GOOGLE_ADS_ID, analytics: !!GA4_ID });
+  const rifiutaTutto = () => decide({ marketing: false, analytics: false });
+  const salvaScelte = () =>
+    decide({
+      marketing: !!GOOGLE_ADS_ID && marketingChecked,
+      analytics: !!GA4_ID && analyticsChecked,
+    });
 
   return (
     <div
@@ -82,9 +100,9 @@ export function CookieBanner() {
 
         <p className="mt-2 text-sm leading-relaxed text-ink-soft">
           Usiamo cookie tecnici, necessari al funzionamento del sito, e — solo con il tuo
-          consenso — il tag di Google Ads, che ci permette di capire quali annunci portano
-          davvero a una richiesta di check-up. Puoi accettare, rifiutare o scegliere per
-          categoria. Trovi il dettaglio nella{" "}
+          consenso — strumenti che ci aiutano a capire quali annunci portano davvero a una
+          richiesta di check-up e come vengono usate le pagine. Puoi accettare, rifiutare o
+          scegliere per categoria. Trovi il dettaglio nella{" "}
           <Link to="/cookie" className="text-brand underline">
             Cookie Policy
           </Link>{" "}
@@ -112,26 +130,52 @@ export function CookieBanner() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-surface px-4 py-3">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <label htmlFor={marketingId} className="text-sm font-semibold text-ink">
-                    Marketing e misurazione campagne
-                  </label>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    Tag di Google Ads: misura le conversioni delle campagne pubblicitarie.
-                    Comporta cookie di profilazione di Google.
-                  </p>
+            {GOOGLE_ADS_ID ? (
+              <div className="rounded-xl bg-surface px-4 py-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label htmlFor={marketingId} className="text-sm font-semibold text-ink">
+                      Marketing e misurazione campagne
+                    </label>
+                    <p className="mt-1 text-sm text-ink-soft">
+                      Tag di Google Ads: misura le conversioni delle campagne pubblicitarie.
+                      Comporta cookie di profilazione di Google.
+                    </p>
+                  </div>
+                  <input
+                    id={marketingId}
+                    type="checkbox"
+                    checked={marketingChecked}
+                    onChange={(e) => setMarketingChecked(e.target.checked)}
+                    className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-brand"
+                  />
                 </div>
-                <input
-                  id={marketingId}
-                  type="checkbox"
-                  checked={marketingChecked}
-                  onChange={(e) => setMarketingChecked(e.target.checked)}
-                  className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-brand"
-                />
               </div>
-            </div>
+            ) : null}
+
+            {GA4_ID ? (
+              <div className="rounded-xl bg-surface px-4 py-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label htmlFor={analyticsId} className="text-sm font-semibold text-ink">
+                      Statistiche di utilizzo
+                    </label>
+                    <p className="mt-1 text-sm text-ink-soft">
+                      Google Analytics: registra in forma aggregata come vengono usate le
+                      pagine — quanto si scorre, quali pulsanti si premono, dove ci si ferma
+                      nel questionario. Ci serve a capire cosa non funziona.
+                    </p>
+                  </div>
+                  <input
+                    id={analyticsId}
+                    type="checkbox"
+                    checked={analyticsChecked}
+                    onChange={(e) => setAnalyticsChecked(e.target.checked)}
+                    className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-brand"
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -142,14 +186,14 @@ export function CookieBanner() {
           */}
           <button
             type="button"
-            onClick={() => decide(true)}
+            onClick={accettaTutto}
             className="flex-1 cursor-pointer rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink/90"
           >
             Accetta tutto
           </button>
           <button
             type="button"
-            onClick={() => decide(false)}
+            onClick={rifiutaTutto}
             className="flex-1 cursor-pointer rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink/90"
           >
             Rifiuta tutto
@@ -158,7 +202,7 @@ export function CookieBanner() {
           {showDetails ? (
             <button
               type="button"
-              onClick={() => decide(marketingChecked)}
+              onClick={salvaScelte}
               className="flex-1 cursor-pointer rounded-full border border-hairline bg-white px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface"
             >
               Salva preferenze
@@ -168,6 +212,7 @@ export function CookieBanner() {
               type="button"
               onClick={() => {
                 setMarketingChecked(marketing);
+                setAnalyticsChecked(analytics);
                 setShowDetails(true);
               }}
               className="flex-1 cursor-pointer rounded-full border border-hairline bg-white px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface"

@@ -1,10 +1,11 @@
 /**
  * Stato del consenso ai cookie.
  *
- * Una sola categoria opzionale — `marketing`, cioè il tag di Google Ads — più i
- * cookie tecnici, che non sono una scelta e quindi non compaiono qui. Se un
- * domani arriva l'analytics, si aggiunge una chiave a `ConsentChoice` e una riga
- * al pannello: il resto regge.
+ * Due categorie opzionali — `marketing` (il tag di Google Ads) e `analytics`
+ * (GA4, che riceve gli eventi di interazione) — più i cookie tecnici, che non
+ * sono una scelta e quindi non compaiono qui. Per aggiungerne una terza:
+ * una chiave qui, una riga nel pannello del banner, una nella tabella
+ * dell'informativa, e POLICY_VERSION alzata.
  *
  * La decisione sta nel `localStorage` e non in un cookie: non deve viaggiare
  * a ogni richiesta, e ci serve leggerla prima di decidere se caricare gtag.
@@ -12,6 +13,7 @@
 
 export type ConsentChoice = {
   marketing: boolean;
+  analytics: boolean;
 };
 
 export type ConsentDecision = ConsentChoice & {
@@ -30,8 +32,11 @@ const STORAGE_KEY = "hr0.cookie-consent";
  * informato: alzando il numero le scelte vecchie decadono e il banner ricompare.
  * Ritoccare la formattazione della pagina non conta — conta cosa viene
  * installato sul dispositivo di chi visita.
+ *
+ * 2 — aggiunta la categoria statistiche (GA4) per gli eventi di interazione.
+ * 1 — solo marketing (Google Ads).
  */
-const POLICY_VERSION = 1;
+const POLICY_VERSION = 2;
 
 /**
  * Dopo sei mesi la scelta scade e il banner torna.
@@ -84,6 +89,7 @@ function readStored(): ConsentDecision | null {
   try {
     const parsed = JSON.parse(raw) as Partial<ConsentDecision>;
     if (typeof parsed?.marketing !== "boolean") return null;
+    if (typeof parsed?.analytics !== "boolean") return null;
     if (parsed.version !== POLICY_VERSION) return null;
 
     const ts = typeof parsed.ts === "string" ? parsed.ts : null;
@@ -91,7 +97,12 @@ function readStored(): ConsentDecision | null {
     const age = Date.now() - new Date(ts).getTime();
     if (!Number.isFinite(age) || age < 0 || age > MAX_AGE_MS) return null;
 
-    return { marketing: parsed.marketing, ts, version: parsed.version };
+    return {
+      marketing: parsed.marketing,
+      analytics: parsed.analytics,
+      ts,
+      version: parsed.version,
+    };
   } catch {
     return null;
   }
@@ -134,6 +145,7 @@ export function getConsentServerSnapshot(): State {
 export function saveConsent(choice: ConsentChoice) {
   const decision: ConsentDecision = {
     marketing: choice.marketing,
+    analytics: choice.analytics,
     ts: new Date().toISOString(),
     version: POLICY_VERSION,
   };

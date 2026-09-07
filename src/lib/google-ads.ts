@@ -1,4 +1,5 @@
 import { getConsentSnapshot } from "./consent";
+import { initConsentMode, loadGtag, updateConsent } from "./gtag";
 
 export const GOOGLE_ADS_ID = import.meta.env.VITE_GOOGLE_ADS_ID as string | undefined;
 export const GOOGLE_ADS_CONVERSION_LABEL = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as
@@ -33,67 +34,12 @@ const CONSENT_MODE = (import.meta.env.VITE_CONSENT_MODE as string | undefined) =
   ? "advanced"
   : "basic";
 
-const SCRIPT_ID = "gtag-google-ads";
 const SENT_KEY = "google-ads-conversion-sent";
 
-declare global {
-  interface Window {
-    dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
-let consentModeReady = false;
-
-/**
- * Prepara `dataLayer` e imposta lo stato di consenso predefinito.
- *
- * Non fa nessuna richiesta di rete: scrive soltanto in un array in memoria. I
- * segnali `default` devono trovarsi nel `dataLayer` *prima* che gtag.js venga
- * eseguito, altrimenti il tag parte già in stato consentito e la scelta arriva
- * troppo tardi. Per questo si chiama all'avvio dell'app, non al consenso.
- */
-export function initConsentMode() {
-  if (typeof window === "undefined" || consentModeReady) return;
-  consentModeReady = true;
-
-  window.dataLayer = window.dataLayer || [];
-  if (!window.gtag) {
-    window.gtag = function gtag() {
-      // eslint-disable-next-line prefer-rest-params
-      window.dataLayer!.push(arguments);
-    };
-  }
-
-  window.gtag("consent", "default", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    // Non c'è analytics sul sito. Lo dichiariamo negato lo stesso: se un domani
-    // viene aggiunto, parte spento invece che acceso per dimenticanza.
-    analytics_storage: "denied",
-    // Mezzo secondo di attesa prima di inviare qualsiasi cosa, il tempo che il
-    // banner legga la scelta già memorizzata e la applichi.
-    wait_for_update: 500,
-  });
-}
-
-/** Carica gtag.js una sola volta (client-side). */
+/** Carica gtag.js e registra il prodotto Google Ads. */
 function loadTag() {
-  if (typeof window === "undefined" || !GOOGLE_ADS_ID) return;
-  if (document.getElementById(SCRIPT_ID)) return;
-
-  initConsentMode();
-  if (!window.gtag) return;
-
-  const s = document.createElement("script");
-  s.id = SCRIPT_ID;
-  s.async = true;
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GOOGLE_ADS_ID)}`;
-  document.head.appendChild(s);
-
-  window.gtag("js", new Date());
-  window.gtag("config", GOOGLE_ADS_ID);
+  if (!GOOGLE_ADS_ID) return;
+  loadGtag(GOOGLE_ADS_ID);
 }
 
 /**
@@ -111,25 +57,14 @@ export function applyAdsConsent(granted: boolean) {
   if (typeof window === "undefined" || !GOOGLE_ADS_ID) return;
 
   initConsentMode();
-  if (!window.gtag) return;
-
-  if (granted) {
-    window.gtag("consent", "update", {
-      ad_storage: "granted",
-      ad_user_data: "granted",
-      ad_personalization: "granted",
-    });
-    loadTag();
-    return;
-  }
-
-  window.gtag("consent", "update", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
+  const stato = granted ? "granted" : "denied";
+  updateConsent({
+    ad_storage: stato,
+    ad_user_data: stato,
+    ad_personalization: stato,
   });
 
-  if (CONSENT_MODE === "advanced") loadTag();
+  if (granted || CONSENT_MODE === "advanced") loadTag();
 }
 
 /**

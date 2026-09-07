@@ -17,8 +17,9 @@ Il riferimento sono l'art. 122 del Codice Privacy, il GDPR e le
 in vigore da gennaio 2022. In pratica:
 
 - i cookie **tecnici** non richiedono consenso, solo informativa;
-- i cookie di **profilazione** — su questo sito il solo tag di Google Ads — richiedono un
-  consenso preventivo, esplicito e revocabile;
+- i cookie **analitici di terza parte** e quelli di **profilazione** — su questo sito GA4 e
+  il tag di Google Ads — richiedono un consenso preventivo, esplicito e revocabile, con
+  categorie separate: chi accetta le statistiche non accetta con ciò la pubblicità;
 - l'informativa deve descrivere **gli strumenti realmente installati**. Una cookie policy
   che elenca strumenti diversi da quelli in uso è peggio di una generica: documenta da sé
   che il presidio non è allineato alla realtà.
@@ -28,9 +29,12 @@ in vigore da gennaio 2022. In pratica:
 | File | Ruolo |
 | --- | --- |
 | `src/lib/consent.ts` | Stato della scelta: lettura, salvataggio, scadenza, notifiche |
+| `src/lib/gtag.ts` | Bootstrap gtag.js condiviso fra Ads e GA4, e segnali Consent Mode |
+| `src/lib/analytics.ts` | GA4: `trackEvent()`, l'unica via da cui passano gli eventi |
+| `src/hooks/use-scroll-depth.ts` | Profondità di lettura, a soglie |
 | `src/hooks/use-consent.ts` | Espone lo stato ai componenti React |
 | `src/components/CookieBanner.tsx` | Il banner e il pannello per categoria |
-| `src/lib/google-ads.ts` | Consent Mode v2 e caricamento condizionato del tag |
+| `src/lib/google-ads.ts` | Caricamento condizionato del tag Ads e invio conversioni |
 | `src/routes/cookie.tsx` | L'informativa, con il pulsante di gestione preferenze |
 | `src/components/landing/Footer.tsx` | Il link "Preferenze cookie" per la revoca |
 
@@ -74,7 +78,61 @@ La variabile `VITE_CONSENT_MODE` decide cosa succede *quando il consenso manca*:
 `basic` è la lettura più prudente dell'art. 122. Il default è `basic`: cambiarlo è una
 scelta da prendere con chi segue la privacy, non una configurazione da ritoccare.
 
-## 5. Aggiungere un nuovo strumento di tracciamento
+Per GA4 non esiste una modalità avanzata: senza consenso alle statistiche non c'è niente da
+misurare, e i ping anonimi servono ad Ads, non ad Analytics.
+
+### Le variabili
+
+| Variabile | Effetto se assente |
+| --- | --- |
+| `VITE_GOOGLE_ADS_ID` | Nessun tag Ads, e la categoria marketing sparisce dal banner |
+| `VITE_GOOGLE_ADS_CONVERSION_LABEL` | Nessuna conversione inviata |
+| `VITE_GA4_ID` | Nessun GA4, e la categoria statistiche sparisce dal banner e dall'informativa |
+| `VITE_CONSENT_MODE` | `basic` |
+
+Le pagine legali e il banner leggono queste variabili: **se uno strumento non è
+configurato, l'informativa non lo dichiara e il banner non ne chiede il consenso.**
+L'informativa descrive così sempre l'ambiente in cui gira, invece di promettere o negare
+cose in base a quando è stata scritta.
+
+## 5. Gli eventi di interazione
+
+Vanno a **GA4**, non a Google Ads. Il motivo è tecnico e vale la pena saperlo prima di
+provare a spostarli: Ads conta solo gli eventi mappati su un'azione di conversione con la
+sua etichetta. Mandargli uno scroll significherebbe creare un'azione di conversione per
+ciascuno e vederseli sommare nella colonna "Conversioni", falsando ogni report e — se
+l'azione finisse fra le principali — mandando Smart Bidding a cercare gente che scorre le
+pagine invece di clienti.
+
+| Evento | Quando | Parametri |
+| --- | --- | --- |
+| `scroll_depth` | Superato il 25/50/75/90% della pagina | `percentuale`, `pagina` |
+| `cta_click` | Clic su un pulsante di invito all'azione | `etichetta`, `destinazione`, `pagina`, `variante` |
+| `calculator_start` | Prima regolazione del calcolatore | — |
+| `calculator_adjust` | Cursore fermo da 800 ms | `campo`, `valore` |
+| `video_play` / `video_pause` / `video_resume` | Comandi sul video | `video_id`, `titolo` |
+| `form_start` | Prima domanda superata | — |
+| `form_step` | Ogni domanda superata | `passo`, `totale`, `domanda` |
+| `form_error` | La validazione blocca l'avanzamento | `passo`, `domanda`, `errore` |
+| `form_submit` / `form_submit_error` | Esito dell'invio | `dettaglio` sull'errore |
+
+Tre accorgimenti che tengono i dati onesti e il volume basso:
+
+- **Gli slider sono in debounce di 800 ms, per campo.** Un cursore trascinato emette un
+  `change` a ogni pixel: mandarli tutti vorrebbe dire centinaia di eventi per sessione e i
+  limiti di GA4 superati. Interessa il valore su cui la mano si ferma, non il percorso.
+- **Lo scroll non si segnala se la pagina non scorre.** Su uno schermo alto una pagina
+  corta si vede tutta da ferma: contarla come "letta al 90%" misurerebbe la finestra del
+  browser, non l'interesse.
+- **`form_step` dice il passo superato**, non quello mostrato. Il rapporto fra `form_start`
+  e l'ultimo `form_step` è la curva di abbandono del questionario: con diciotto domande è
+  il dato più utile che questi eventi producono.
+
+Ogni evento passa da `trackEvent()`, che **ricontrolla il consenso da sé**. Le chiamate
+sono sparse per tutta l'interfaccia: se ognuna dovesse ricordarsi il controllo, basterebbe
+una dimenticanza per tracciare chi ha detto di no.
+
+## 6. Aggiungere un nuovo strumento di tracciamento
 
 Quattro passaggi, e nessuno è saltabile:
 
@@ -90,7 +148,7 @@ Quattro passaggi, e nessuno è saltabile:
 Il punto 4 è quello che si dimentica. Senza, chi aveva già accettato si ritrova un nuovo
 strumento installato sulla base di un consenso che non lo riguardava.
 
-## 6. Verifica
+## 7. Verifica
 
 1. Finestra anonima, F12 → **Application → Local Storage**: `hr0.cookie-consent` non
    esiste e il banner è visibile.
@@ -100,10 +158,13 @@ strumento installato sulla base di un consenso che non lo riguardava.
    nulla. Ricarica: il banner non torna.
 4. Footer → **Preferenze cookie**: il pannello si riapre mostrando la scelta in vigore.
 5. Attiva il marketing e salva: `gtag/js?id=AW-…` compare in Network.
+5b. Con `VITE_GA4_ID` impostata, attiva le statistiche: scorri la pagina e premi una CTA,
+   e in Network compaiono le chiamate a `google-analytics.com/g/collect`. Con le
+   statistiche rifiutate non ne parte nessuna.
 6. Riapri le preferenze, disattiva il marketing e salva: la pagina si ricarica e i cookie
    `_gcl_*` spariscono (**Application → Cookies**).
 
-## 7. Cosa resta aperto
+## 8. Cosa resta aperto
 
 - **Il footer non c'è su `/check-up` e `/grazie`.** Su quelle due pagine manca quindi il
   link "Preferenze cookie". Il banner e le informative restano raggiungibili, ma la revoca
