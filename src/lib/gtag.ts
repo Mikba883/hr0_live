@@ -20,6 +20,7 @@ declare global {
 const SCRIPT_ID = "gtag-js";
 
 let consentModeReady = false;
+let jsInizializzato = false;
 const configurati = new Set<string>();
 
 /**
@@ -61,13 +62,23 @@ export function updateConsent(signals: Record<string, "granted" | "denied">) {
 }
 
 /**
- * Carica gtag.js (una volta sola) e registra il prodotto con questo ID.
+ * Carica gtag.js per questo prodotto e lo registra con il suo ID.
  *
- * Chiamarla due volte con lo stesso ID non fa niente; con ID diversi aggiunge
- * solo un `config`, perché lo script è già in pagina.
+ * **Uno script per ogni ID, non uno solo condiviso.** Il primo tentativo
+ * caricava `gtag/js` una volta sola con l'ID del primo prodotto che si
+ * registrava, dando per scontato che poi bastasse un `config` per gli altri.
+ * Non è così: `gtag/js?id=X` restituisce il contenitore di X e delle
+ * destinazioni collegate a X. Un `config` su un ID che quel contenitore non
+ * conosce **non produce niente e non segnala niente** — il `dataLayer` si
+ * riempie di eventi che nessuno consuma.
  *
- * `params` sono le impostazioni del `config`, e valgono solo per quell'ID: i
- * due prodotti condividono lo script ma non la configurazione.
+ * Costava caro proprio qui: Ads e GA4 sono due account distinti e non
+ * collegati, e il contenitore di Ads è per giunta vuoto (Google risponde 200
+ * con 9 kB invece di oltre 100), quindi GA4 agganciato a quello non è mai
+ * partito. Sono richieste separate perché sono prodotti separati.
+ *
+ * `params` sono le impostazioni del `config` di quell'ID soltanto: il
+ * `dataLayer` è condiviso, la configurazione no.
  */
 export function loadGtag(id: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined" || !id) return;
@@ -75,17 +86,25 @@ export function loadGtag(id: string, params?: Record<string, unknown>) {
   initConsentMode();
   if (!window.gtag) return;
 
-  if (!document.getElementById(SCRIPT_ID)) {
+  if (configurati.has(id)) return;
+  configurati.add(id);
+
+  const elemento = `${SCRIPT_ID}-${id}`;
+  if (!document.getElementById(elemento)) {
     const s = document.createElement("script");
-    s.id = SCRIPT_ID;
+    s.id = elemento;
     s.async = true;
     s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
     document.head.appendChild(s);
-    window.gtag("js", new Date());
+
+    // `js` marca l'istante di partenza del dataLayer: serve una volta sola per
+    // pagina, e gli script caricati dopo lo trovano già in coda.
+    if (!jsInizializzato) {
+      jsInizializzato = true;
+      window.gtag("js", new Date());
+    }
   }
 
-  if (configurati.has(id)) return;
-  configurati.add(id);
   window.gtag("config", id, params ?? {});
 }
 
