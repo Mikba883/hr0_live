@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from "react";
 
 import { useConsent } from "@/hooks/use-consent";
 import { closeConsentPreferences, hydrateConsent, saveConsent } from "@/lib/consent";
-import { applyAnalyticsConsent, GA4_ID } from "@/lib/analytics";
+import { applyAnalyticsConsent, GA4_ID, trackEvent } from "@/lib/analytics";
 import { applyAdsConsent, GOOGLE_ADS_ID } from "@/lib/google-ads";
 
 /**
@@ -63,7 +63,7 @@ export function CookieBanner() {
   if (!GOOGLE_ADS_ID && !GA4_ID) return null;
 
   /** Applica una scelta per categoria e la rende persistente. */
-  const decide = (scelta: { marketing: boolean; analytics: boolean }) => {
+  const decide = (scelta: { marketing: boolean; analytics: boolean }, via: string) => {
     // Una categoria tolta dopo che era stata concessa: lo script è già in
     // pagina e non si può disfare.
     const revoca = reopened && ((marketing && !scelta.marketing) || (analytics && !scelta.analytics));
@@ -73,18 +73,36 @@ export function CookieBanner() {
     applyAnalyticsConsent(scelta.analytics);
     setShowDetails(false);
 
+    /*
+      Va dopo `applyAnalyticsConsent`, non prima: è quella chiamata a caricare
+      GA4, e un evento mandato un attimo prima cadrebbe nel vuoto.
+
+      Di questo evento arriva solo metà del quadro, ed è giusto così: chi
+      rifiuta le statistiche non può essere misurato — sarebbe esattamente la
+      cosa che ha appena negato. **Il tasso di accettazione complessivo non è
+      ricavabile da qui.** Quello che si legge è il rapporto fra chi concede le
+      statistiche e chi concede anche il marketing: è il numero che dice quanta
+      parte del traffico Google Ads riesce davvero a vedere, ed è il motivo per
+      cui vale la pena mandarlo.
+    */
+    trackEvent("consent_choice", { via, marketing: scelta.marketing, analytics: scelta.analytics });
+
     // Dopo una revoca ricarichiamo, così sparisce anche quello che i tag hanno
     // lasciato in memoria.
     if (revoca) window.location.reload();
   };
 
-  const accettaTutto = () => decide({ marketing: !!GOOGLE_ADS_ID, analytics: !!GA4_ID });
-  const rifiutaTutto = () => decide({ marketing: false, analytics: false });
+  const accettaTutto = () =>
+    decide({ marketing: !!GOOGLE_ADS_ID, analytics: !!GA4_ID }, "accetta-tutto");
+  const rifiutaTutto = () => decide({ marketing: false, analytics: false }, "rifiuta-tutto");
   const salvaScelte = () =>
-    decide({
-      marketing: !!GOOGLE_ADS_ID && marketingChecked,
-      analytics: !!GA4_ID && analyticsChecked,
-    });
+    decide(
+      {
+        marketing: !!GOOGLE_ADS_ID && marketingChecked,
+        analytics: !!GA4_ID && analyticsChecked,
+      },
+      "scelte-per-categoria",
+    );
 
   return (
     <div
@@ -162,8 +180,9 @@ export function CookieBanner() {
                     </label>
                     <p className="mt-1 text-sm text-ink-soft">
                       Google Analytics: registra in forma aggregata come vengono usate le
-                      pagine — quanto si scorre, quali pulsanti si premono, dove ci si ferma
-                      nel questionario. Ci serve a capire cosa non funziona.
+                      pagine — quanto si scorre, quanto a lungo ci si resta, quali pulsanti
+                      si premono, dove ci si ferma nel questionario. Ci serve a capire cosa
+                      non funziona.
                     </p>
                   </div>
                   <input
@@ -179,7 +198,15 @@ export function CookieBanner() {
           </div>
         )}
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+        {/*
+          `data-track="manual"`: la scelta la racconta `consent_choice`, con
+          quali categorie sono state concesse. Un click generico in più su
+          questi pulsanti non aggiungerebbe niente.
+        */}
+        <div
+          className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center"
+          data-track="manual"
+        >
           {/*
             I due pulsanti hanno la stessa classe: stessa dimensione, stesso
             contrasto, stesso ordine di lettura. Non è una svista di design.

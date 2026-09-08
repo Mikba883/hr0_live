@@ -65,8 +65,11 @@ export function updateConsent(signals: Record<string, "granted" | "denied">) {
  *
  * Chiamarla due volte con lo stesso ID non fa niente; con ID diversi aggiunge
  * solo un `config`, perché lo script è già in pagina.
+ *
+ * `params` sono le impostazioni del `config`, e valgono solo per quell'ID: i
+ * due prodotti condividono lo script ma non la configurazione.
  */
-export function loadGtag(id: string) {
+export function loadGtag(id: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined" || !id) return;
 
   initConsentMode();
@@ -83,7 +86,7 @@ export function loadGtag(id: string) {
 
   if (configurati.has(id)) return;
   configurati.add(id);
-  window.gtag("config", id);
+  window.gtag("config", id, params ?? {});
 }
 
 /** `true` se il prodotto con questo ID è stato registrato. */

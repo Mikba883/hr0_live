@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { CookieBanner } from "../components/CookieBanner";
+import { usePageTracking } from "../hooks/use-page-tracking";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { getConsentSnapshot, hydrateConsent } from "../lib/consent";
 import { applyAnalyticsConsent } from "../lib/analytics";
@@ -132,6 +133,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Visita, scroll e permanenza per ogni pagina pubblica. Qui e non nelle
+  // singole route: montato una volta sola non si può dimenticare su una pagina.
+  usePageTracking();
 
   // L'area riservata è privata e noindex: non ha senso mandarne le visite a
   // Google Ads, e senza tracciamento non c'è consenso da chiedere.

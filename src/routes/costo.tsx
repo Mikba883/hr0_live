@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CostCalculator } from "@/components/landing/CostCalculator";
-import { CtaButton } from "@/components/landing/CtaButton";
+import { CtaButton, CtaLink } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
@@ -18,7 +18,6 @@ import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 import { BlurReveal } from "@/components/landing/BlurReveal";
-import { useScrollDepth } from "@/hooks/use-scroll-depth";
 
 export const Route = createFileRoute("/costo")({
   head: () => ({
@@ -77,13 +76,11 @@ function CtaBlock({ dark = false }: { dark?: boolean }) {
 }
 
 function CostoPage() {
-  useScrollDepth("costo");
-
   return (
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Solo 4 check-up gratuiti a settimana ·{" "}
-        <a href="/check-up" className="text-brand underline underline-offset-2">Prenota il tuo posto</a>
+        <CtaLink href="/check-up" className="text-brand underline underline-offset-2">Prenota il tuo posto</CtaLink>
       </AnnouncementBar>
 
       {/* Hero */}

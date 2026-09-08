@@ -16,10 +16,18 @@ import { initConsentMode, isConfigured, loadGtag, updateConsent } from "./gtag";
  */
 export const GA4_ID = import.meta.env.VITE_GA4_ID as string | undefined;
 
-/** Carica gtag.js e registra la proprietà GA4. */
+/**
+ * Carica gtag.js e registra la proprietà GA4.
+ *
+ * `send_page_view: false` perché il `page_view` lo mandiamo noi da
+ * `usePageTracking`. Il `config` ne manderebbe uno solo al caricamento dello
+ * script: questo è un sito a navigazione client-side, e le pagine raggiunte
+ * senza ricaricare — `/grazie` su tutte — non ne vedrebbero mai uno. Lasciando
+ * entrambi, la pagina d'ingresso ne conterebbe due.
+ */
 function loadGa4() {
   if (!GA4_ID) return;
-  loadGtag(GA4_ID);
+  loadGtag(GA4_ID, { send_page_view: false });
 }
 
 /** Allinea GA4 alla scelta dell'utente. Idempotente. */
@@ -35,29 +43,81 @@ export function applyAnalyticsConsent(granted: boolean) {
 }
 
 /**
- * Invia un evento a GA4.
+ * Consenso verificato e tag pronto: `true` se si può inviare.
  *
- * Verifica il consenso da sé: è l'unico punto da cui passano gli eventi di
- * interazione, e le chiamate sono sparse per tutta l'interfaccia — affidarsi a
- * chi chiama significherebbe che basta una dimenticanza per tracciare qualcuno
- * che ha detto di no.
- *
- * I nomi degli eventi sono `snake_case` per convenzione GA4, e i parametri
- * vanno tenuti pochi e stabili: ognuno va poi registrato come dimensione
- * personalizzata nella proprietà per comparire nei report.
+ * Il consenso si controlla qui e non nel chiamante: le chiamate sono sparse
+ * per tutta l'interfaccia, e affidarsi a chi chiama significherebbe che basta
+ * una dimenticanza per tracciare qualcuno che ha detto di no.
  */
-export function trackEvent(name: string, params?: Record<string, unknown>) {
-  if (typeof window === "undefined" || !GA4_ID) return;
+function ga4Pronto(): boolean {
+  if (typeof window === "undefined" || !GA4_ID) return false;
 
   // Gli effetti dei componenti figli girano prima di quelli della radice: il
   // primo evento di una pagina può arrivare mentre la scelta salvata non è
   // ancora stata letta, e senza questo verrebbe scartato come se il consenso
   // non ci fosse. È idempotente.
   hydrateConsent();
-  if (!getConsentSnapshot().decision?.analytics) return;
+  if (!getConsentSnapshot().decision?.analytics) return false;
 
   if (!isConfigured(GA4_ID)) loadGa4();
-  if (!window.gtag) return;
+  return !!window.gtag;
+}
 
-  window.gtag("event", name, { send_to: GA4_ID, ...params });
+/**
+ * Invia un evento a GA4.
+ *
+ * I nomi degli eventi sono `snake_case` per convenzione GA4, e i parametri
+ * vanno tenuti pochi e stabili: ognuno va poi registrato come dimensione
+ * personalizzata nella proprietà per comparire nei report.
+ */
+export function trackEvent(name: string, params?: Record<string, unknown>) {
+  if (!ga4Pronto()) return;
+  window.gtag!("event", name, { send_to: GA4_ID, ...params });
+}
+
+/**
+ * Segnala che è stata vista una nuova pagina.
+ *
+ * Il `set` prima dell'evento non è ridondante: aggiorna la pagina corrente per
+ * *tutti* gli eventi successivi. Senza, uno scroll o un click su `/grazie`
+ * risulterebbero avvenuti sulla pagina da cui si è partiti, perché per gtag la
+ * pagina resta quella letta al caricamento dello script.
+ */
+export function trackPageView() {
+  if (!ga4Pronto()) return;
+  window.gtag!("set", {
+    page_location: window.location.href,
+    page_title: document.title,
+  });
+  window.gtag!("event", "page_view", { send_to: GA4_ID });
+}
+
+/**
+ * Click su una chiamata all'azione.
+ *
+ * Tutte le CTA passano di qui invece di comporre l'evento per conto proprio:
+ * gli stessi quattro parametri, scritti allo stesso modo, sono la differenza
+ * fra un report che si legge e quattro righe che dicono la stessa cosa con
+ * nomi diversi.
+ *
+ * - `etichetta` — il testo del pulsante, ciò che riconoscerai fra sei mesi.
+ * - `destinazione` — dove porta.
+ * - `variante` — che tipo di CTA è: lo stile grafico (`primary`, `outline`,
+ *   `ghost`) oppure la collocazione (`sticky-mobile`, `inline`). Serve a
+ *   distinguere la barra fissa del telefono dal pulsante grande dell'hero, che
+ *   hanno lo stesso testo e rendimenti diversissimi.
+ * - `pagina` — aggiunta qui: lo stesso testo compare su landing diverse, e
+ *   senza non sapresti quale sta convertendo.
+ */
+type CtaParams = {
+  etichetta: string;
+  destinazione: string;
+  variante?: string;
+} & Record<string, unknown>;
+
+export function trackCtaClick(params: CtaParams) {
+  trackEvent("cta_click", {
+    pagina: typeof window === "undefined" ? "" : window.location.pathname,
+    ...params,
+  });
 }

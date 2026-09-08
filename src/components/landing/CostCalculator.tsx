@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { trackEvent } from "@/lib/analytics";
+import { trackCtaClick, trackEvent } from "@/lib/analytics";
 
 const eur = (n: number) =>
   new Intl.NumberFormat("it-IT", {
@@ -254,11 +254,12 @@ export function CostCalculator() {
 
           <a
             href="/check-up"
+            data-track="manual"
             onClick={() =>
-              trackEvent("cta_click", {
+              trackCtaClick({
                 etichetta: "Voglio capire come ridurlo",
                 destinazione: "/check-up",
-                pagina: typeof window === "undefined" ? "" : window.location.pathname,
+                variante: "calcolatore",
                 // Il totale calcolato: dice se chi clicca è chi ha visto un
                 // numero grande o se il valore mostrato non c'entra.
                 totale_calcolato: Math.round(totale),

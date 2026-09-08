@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { trackEvent } from "@/lib/analytics";
+import { trackCtaClick } from "@/lib/analytics";
 
 export function CtaButton({
   href,
@@ -38,16 +38,40 @@ export function CtaButton({
     <a
       href={href}
       className={`${base} ${sizes} ${styles}`}
-      onClick={() =>
-        trackEvent("cta_click", {
-          etichetta,
-          destinazione: href,
-          // La pagina di partenza: lo stesso testo compare su landing diverse,
-          // e senza questo non sapresti quale sta convertendo.
-          pagina: typeof window === "undefined" ? "" : window.location.pathname,
-          variante: variant,
-        })
-      }
+      data-track="manual"
+      onClick={() => trackCtaClick({ etichetta, destinazione: href, variante: variant })}
+    >
+      {children}
+    </a>
+  );
+}
+
+/**
+ * CTA testuale dentro una frase — la barra annunci, una nota a piè di sezione.
+ *
+ * Graficamente è un link qualunque, ma porta al check-up esattamente come il
+ * pulsante grande: se finisse fra i click generici non lo troveresti mai nel
+ * report delle CTA, che è dove lo cercherai.
+ */
+export function CtaLink({
+  href,
+  children,
+  className,
+  nome,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  nome?: string;
+}) {
+  const etichetta = nome ?? (typeof children === "string" ? children : href);
+
+  return (
+    <a
+      href={href}
+      className={className}
+      data-track="manual"
+      onClick={() => trackCtaClick({ etichetta, destinazione: href, variante: "inline" })}
     >
       {children}
     </a>

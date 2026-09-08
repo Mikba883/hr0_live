@@ -23,12 +23,17 @@ const SOGLIE = [25, 50, 75, 90] as const;
  * Il listener è passivo e legge la posizione dentro un `requestAnimationFrame`:
  * durante lo scroll `scroll` può scattare decine di volte al secondo, e
  * leggere `scrollHeight` a ogni colpo forza il browser a ricalcolare il layout.
+ *
+ * Con `pagina` a `null` non fa niente: è così che il tracciamento resta spento
+ * finché manca il consenso, invece di restare in ascolto per eventi che
+ * verrebbero scartati comunque.
  */
-export function useScrollDepth(pagina: string) {
+export function useScrollDepth(pagina: string | null) {
   const raggiunte = useRef<Set<number>>(new Set());
   const inCoda = useRef(false);
 
   useEffect(() => {
+    if (!pagina) return;
     raggiunte.current = new Set();
 
     const misura = () => {
