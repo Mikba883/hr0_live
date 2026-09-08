@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, X, Lightbulb } from "lucide-react";
 import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
-import { CtaButton } from "@/components/landing/CtaButton";
+import { CtaButton, CtaLink } from "@/components/landing/CtaButton";
 import { Card } from "@/components/landing/Card";
 import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
@@ -61,7 +61,7 @@ function MetodoPage() {
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
         Costruisci il metodo di assunzione dentro la tua azienda ·{" "}
-        <a href="/check-up" className="text-brand underline underline-offset-2">Check-up gratis</a>
+        <CtaLink href="/check-up" className="text-brand underline underline-offset-2">Check-up gratis</CtaLink>
       </AnnouncementBar>
 
       {/* Hero */}

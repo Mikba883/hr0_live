@@ -1,6 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
+import { useClickTracking } from "@/hooks/use-click-tracking";
 import { useConsent } from "@/hooks/use-consent";
 import { useScrollDepth } from "@/hooks/use-scroll-depth";
 import { useTimeOnPage } from "@/hooks/use-time-on-page";
@@ -8,7 +9,7 @@ import { trackPageView } from "@/lib/analytics";
 
 /**
  * Tutto il tracciamento che vale per ogni pagina: visita, profondità di scroll,
- * permanenza.
+ * permanenza, click.
  *
  * Sta in un hook solo, montato una volta nella radice, invece che pagina per
  * pagina. Il motivo è pratico: finché ogni route doveva ricordarsi di chiamare
@@ -46,4 +47,5 @@ export function usePageTracking() {
 
   useScrollDepth(pagina);
   useTimeOnPage(pagina);
+  useClickTracking(!!pagina);
 }

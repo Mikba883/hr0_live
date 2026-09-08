@@ -312,7 +312,13 @@ function CheckUpPage() {
   const goPrev = () => {
     setTouched(false);
     setError(null);
-    if (safeIndex > 0) setIndex(safeIndex - 1);
+    if (safeIndex === 0) return;
+    // Tornare indietro non è navigazione innocua su un modulo a una domanda
+    // per schermata: vuol dire che una domanda è stata capita male, o che la
+    // risposta data prima non convince più. Dove succede spesso, la domanda è
+    // scritta male.
+    trackEvent("form_back", { passo: safeIndex + 1, domanda: q?.key });
+    setIndex(safeIndex - 1);
   };
 
   // ChoiceList fa avanzare da solo dopo la scelta, ma con un `setTimeout`: se
@@ -413,8 +419,16 @@ function CheckUpPage() {
           </div>
         )}
 
-        {/* Nav */}
-        <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/*
+          Nav. `data-track="manual"`: il percorso dentro il modulo lo
+          raccontano `form_step`, `form_back` e `form_error`, che dicono a che
+          domanda si era. Un click generico su "Continua" non aggiungerebbe
+          niente e sdoppierebbe il conteggio di ogni passo.
+        */}
+        <div
+          className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between"
+          data-track="manual"
+        >
           {safeIndex > 0 ? (
             <button
               type="button"
@@ -575,7 +589,9 @@ function ChoiceList({
   onSelect: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    // Le risposte fanno avanzare da sole: il click è già raccontato da
+    // `form_step`, con la domanda e il passo.
+    <div className="flex flex-col gap-3" data-track="manual">
       {options.map((opt, i) => {
         const selected = value === opt;
         const letter = String.fromCharCode(65 + i);

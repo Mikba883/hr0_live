@@ -91,3 +91,33 @@ export function trackPageView() {
   });
   window.gtag!("event", "page_view", { send_to: GA4_ID });
 }
+
+/**
+ * Click su una chiamata all'azione.
+ *
+ * Tutte le CTA passano di qui invece di comporre l'evento per conto proprio:
+ * gli stessi quattro parametri, scritti allo stesso modo, sono la differenza
+ * fra un report che si legge e quattro righe che dicono la stessa cosa con
+ * nomi diversi.
+ *
+ * - `etichetta` — il testo del pulsante, ciò che riconoscerai fra sei mesi.
+ * - `destinazione` — dove porta.
+ * - `variante` — che tipo di CTA è: lo stile grafico (`primary`, `outline`,
+ *   `ghost`) oppure la collocazione (`sticky-mobile`, `inline`). Serve a
+ *   distinguere la barra fissa del telefono dal pulsante grande dell'hero, che
+ *   hanno lo stesso testo e rendimenti diversissimi.
+ * - `pagina` — aggiunta qui: lo stesso testo compare su landing diverse, e
+ *   senza non sapresti quale sta convertendo.
+ */
+type CtaParams = {
+  etichetta: string;
+  destinazione: string;
+  variante?: string;
+} & Record<string, unknown>;
+
+export function trackCtaClick(params: CtaParams) {
+  trackEvent("cta_click", {
+    pagina: typeof window === "undefined" ? "" : window.location.pathname,
+    ...params,
+  });
+}
