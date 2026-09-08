@@ -36,7 +36,7 @@ Infine **API Keys → Create API Key**: copia la chiave, si vede una volta sola.
 | `NOTIFICA_A`      | dove vuoi ricevere l'avviso. Più indirizzi separati da virgola                  |
 | `NOTIFICA_DA`     | il mittente, es. `Check-up <lead@tuodominio.it>` oppure `onboarding@resend.dev` |
 | `NOTIFICA_SECRET` | una stringa lunga a caso, inventata da te                                       |
-| `SITO_URL`        | `https://hr0-sparkle-connect.lovable.app` (senza barra finale)                  |
+| `SITO_URL`        | `https://hr0.it` (senza barra finale)                  |
 
 Per `NOTIFICA_SECRET` va bene qualunque stringa lunga e casuale: è la password che il
 database userà per farsi riconoscere dalla funzione. Non deve essere memorabile, deve

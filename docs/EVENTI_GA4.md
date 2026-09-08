@@ -22,14 +22,21 @@ senza nessun errore da nessuna parte.
 1. Crea la proprietà su **analytics.google.com** → Amministrazione → Crea → Proprietà.
    Flusso di dati **Web**, con l'URL del sito. Google restituisce un **ID misurazione** nella
    forma `G-XXXXXXXXXX` — è quello che serve, non l'ID proprietà numerico.
-2. Su **Lovable**, nelle variabili d'ambiente del progetto:
+2. In **Vercel → Project → Settings → Environment Variables**, tipo **Config**, ambiente
+   **Production** soltanto:
 
    ```
    VITE_GA4_ID=G-XXXXXXXXXX
    ```
 
-3. **Ripubblica il sito.** Le variabili `VITE_` vengono lette quando il sito viene
-   costruito, non a ogni visita: senza un nuovo deploy non cambia niente.
+   Solo Production, e **non** nel `.env` del repository: senza la variabile il codice non
+   raccoglie niente, ed è così che le anteprime dei branch e il sito di prova su Lovable
+   restano fuori dai dati. Metterla nel `.env` la darebbe a tutti gli ambienti, e su volumi
+   bassi bastano dieci sessioni di prova per distorcere il quadro.
+
+3. **Rifai il deploy** (Deployments → `⋯` → Redeploy). Le variabili `VITE_` vengono scritte
+   dentro il JavaScript quando il sito viene costruito: salvarla non basta, Vercel non
+   ricostruisce da solo.
 
 Nel flusso di dati lascia acceso l'**Enhanced measurement** solo per `page_view`; scroll e
 click li mandiamo noi con parametri più utili, e tenere entrambi produrrebbe due conteggi

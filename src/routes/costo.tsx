@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { urlAssoluto } from "@/lib/site";
 import {
   Check,
   Target,
@@ -26,9 +27,9 @@ export const Route = createFileRoute("/costo")({
       { name: "description", content: "In 30 minuti calcoliamo il costo nascosto delle tue assunzioni: ruoli scoperti, persone sbagliate, tempo perso. Check-up gratuito." },
       { property: "og:title", content: "Quanto ti costa un'assunzione sbagliata?" },
       { property: "og:description", content: "Check-up gratuito di 30 minuti. Esci con i tuoi numeri, che lavoriamo insieme o no." },
-      { property: "og:url", content: "https://hr0-sparkle-connect.lovable.app/costo" },
+      { property: "og:url", content: urlAssoluto("/costo") },
     ],
-    links: [{ rel: "canonical", href: "https://hr0-sparkle-connect.lovable.app/costo" }],
+    links: [{ rel: "canonical", href: urlAssoluto("/costo") }],
   }),
   component: CostoPage,
 });

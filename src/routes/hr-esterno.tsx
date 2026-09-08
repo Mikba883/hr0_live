@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { urlAssoluto } from "@/lib/site";
 import {
   Check,
   ClipboardList,
@@ -23,9 +24,9 @@ export const Route = createFileRoute("/hr-esterno")({
       { name: "description", content: "Direzione HR esterna per PMI: 4-8 giornate al mese in azienda. Selezione, onboarding, processi. Call gratuita di dimensionamento." },
       { property: "og:title", content: "Direzione HR esterna per PMI, a giornate" },
       { property: "og:description", content: "Entro in azienda come responsabile HR a tempo, con obiettivi e KPI. Call gratuita di 30 minuti." },
-      { property: "og:url", content: "https://hr0-sparkle-connect.lovable.app/hr-esterno" },
+      { property: "og:url", content: urlAssoluto("/hr-esterno") },
     ],
-    links: [{ rel: "canonical", href: "https://hr0-sparkle-connect.lovable.app/hr-esterno" }],
+    links: [{ rel: "canonical", href: urlAssoluto("/hr-esterno") }],
   }),
   component: HrEsternoPage,
 });
