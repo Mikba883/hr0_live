@@ -32,8 +32,11 @@ Lo snippet **non va incollato da nessuna parte**: il codice è già nel sito.
 
 ## 2. Le variabili
 
-Le variabili vanno **dove viene costruito il sito che vedono i visitatori**, cioè in
-**Vercel → Project → Settings → Environment Variables**, ambiente **Production**:
+Le variabili vanno nel **`.env` del repository**, non nel pannello di Vercel: la
+configurazione Vite di questo progetto passa da `@lovable.dev/vite-tanstack-config`, che
+fa una propria "VITE_* env injection", e una variabile che esiste solo su Vercel non
+arriva a `import.meta.env`. Vedi il commento in testa al `.env` e il punto 1 di
+[EVENTI_GA4.md](EVENTI_GA4.md).
 
 ```
 VITE_GOOGLE_ADS_ID=AW-1234567890
@@ -42,30 +45,19 @@ VITE_GOOGLE_ADS_LEAD_VALUE=250        # opzionale
 VITE_CONSENT_MODE=basic               # opzionale: basic (default) | advanced
 ```
 
-Impostale come **Config**, non come *Secret*: finiscono comunque nel JavaScript di ogni
-pagina, quindi segrete non sono, e da *Secret* non potresti più rileggerle per controllare
-quale account è collegato.
-
 Copiale, non riscriverle a mano: in quelle etichette `O` e `0`, `l` e `I` si somigliano, e
 un carattere sbagliato non produce nessun errore — semplicemente non arriva mai una
 conversione.
 
-**Poi rifai il deploy.** Le variabili `VITE_` vengono scritte dentro il JavaScript quando
-il sito viene costruito, non lette a ogni visita: salvare la variabile non basta, e né
-Vercel né Lovable ricostruiscono da soli quando ne cambi una.
+**Poi commit e push.** Le variabili `VITE_` vengono scritte dentro il JavaScript quando il
+sito viene costruito, non lette a ogni visita.
 
-### Perché l'ambiente conta
+### ⚠️ Le anteprime ereditano le stesse chiavi
 
-Solo **Production**. Le anteprime dei branch e l'ambiente di prova su Lovable non devono
-avere queste variabili: senza, il tag non viene caricato affatto e le prove non sporcano i
-dati. È una proprietà del codice, non un caso — vedi il primo paragrafo di questo
-documento.
-
-⚠️ **Oggi `VITE_GOOGLE_ADS_ID` e `VITE_GOOGLE_ADS_CONVERSION_LABEL` stanno anche nel `.env`
-committato**, quindi ce l'ha pure il sito di prova: chi completa il check-up lì dentro
-accettando i cookie marketing fa partire una **conversione vera**. Vanno spostate in Vercel
-e tolte dal `.env`, **in quest'ordine** — al contrario la produzione resta scoperta nel
-mezzo.
+Il `.env` è tracciato da git, quindi ce l'hanno anche le anteprime dei branch e il sito di
+prova: **chi completa il check-up lì accettando i cookie marketing fa partire una
+conversione vera.** Spostarle su Vercel non è la soluzione — là non vengono lette affatto.
+La separazione va fatta nel codice, con un controllo sul dominio prima di caricare i tag.
 
 Sono variabili pubbliche, finiscono nel JavaScript della pagina: per un ID di conversione
 va bene. **Non aggiungere mai lì chiavi segrete** (Resend, `service_role` di Supabase) —
