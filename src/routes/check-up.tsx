@@ -237,6 +237,14 @@ const questions: Question[] = [
   },
 ];
 
+/**
+ * Come si chiama questo modulo nei report.
+ *
+ * Sul sito ne esiste più d'uno, e `form_start` senza questo li sommerebbe in
+ * un imbuto solo che non descrive nessuno dei due.
+ */
+const MODULO = "check-up";
+
 // -------------------- page --------------------
 
 function CheckUpPage() {
@@ -266,8 +274,80 @@ function CheckUpPage() {
   const q = visible[safeIndex];
   const progress = ((safeIndex + 1) / total) * 100;
 
-  const set = <K extends keyof State>(k: K, v: State[K]) =>
+  /** Una sola `form_start` per compilazione, anche tornando indietro e avanti. */
+  const iniziato = useRef(false);
+  /** Quando è stato toccato il primo campo, per misurare quanto ci vuole. */
+  const inizio = useRef(0);
+  /** Il salvataggio è andato a buon fine: non è un abbandono. */
+  const inviato = useRef(false);
+  /** L'abbandono si segnala una volta sola, comunque sia uscito. */
+  const abbandonato = useRef(false);
+
+  /**
+   * Segna l'inizio della compilazione, alla prima interazione con un campo.
+   *
+   * Non al primo "Continua" riuscito: chi scrive il nome, ci ripensa e se ne
+   * va ha cominciato a compilare a tutti gli effetti, e non contarlo nasconde
+   * proprio l'abbandono più precoce — quello che costa di più.
+   */
+  const segnalaInizio = () => {
+    if (iniziato.current) return;
+    iniziato.current = true;
+    inizio.current = Date.now();
+    trackEvent("form_start", { modulo: MODULO });
+  };
+
+  /** Secondi dall'inizio della compilazione. */
+  const durata = () => (inizio.current ? Math.round((Date.now() - inizio.current) / 1000) : 0);
+
+  /**
+   * A che punto si era, letto al momento dell'uscita.
+   *
+   * L'effetto che segnala l'abbandono gira una volta sola, quindi la sua
+   * chiusura vede il primo passo per sempre. Questo ref, aggiornato a ogni
+   * render, è ciò che rende utile l'evento: senza, ogni abbandono risulterebbe
+   * avvenuto alla domanda uno.
+   */
+  const dove = useRef<{ passo: number; domanda?: string; totale: number }>({
+    passo: 1,
+    totale: 0,
+  });
+
+  /**
+   * Chi se ne va a metà, e da quale domanda.
+   *
+   * Su un modulo di diciotto schermate è il dato che manca per sapere dove si
+   * rompe: l'ultimo `form_step` dice fin dove è arrivato, non che ha smesso.
+   *
+   * Ascolta `pagehide` e lo smontaggio, non il passaggio in secondo piano.
+   * Chi apre la posta per copiarsi un indirizzo e torna a finire il modulo non
+   * ha abbandonato niente, e contarlo falserebbe l'unica cosa che questo
+   * evento deve dire. In cambio qualche chiusura da telefono sfugge.
+   */
+  useEffect(() => {
+    const abbandona = () => {
+      if (!iniziato.current || inviato.current || abbandonato.current) return;
+      abbandonato.current = true;
+      trackEvent("form_abandon", {
+        modulo: MODULO,
+        passo: dove.current.passo,
+        totale: dove.current.totale,
+        domanda: dove.current.domanda,
+        secondi: durata(),
+      });
+    };
+
+    window.addEventListener("pagehide", abbandona);
+    return () => {
+      window.removeEventListener("pagehide", abbandona);
+      abbandona();
+    };
+  }, []);
+
+  const set = <K extends keyof State>(k: K, v: State[K]) => {
+    segnalaInizio();
     setState((s) => ({ ...s, [k]: v }));
+  };
 
   const currentError = useMemo(() => {
     if (!q) return null;
@@ -279,28 +359,31 @@ function CheckUpPage() {
     return null;
   }, [q, state]);
 
-  /** Una sola `form_start` per compilazione, anche tornando indietro e avanti. */
-  const iniziato = useRef(false);
-
   const goNext = () => {
     if (currentError) {
       setTouched(true);
       // Dove la gente sbatte contro la validazione: su un modulo di diciotto
       // domande è il punto in cui si perde chi se ne va.
-      trackEvent("form_error", { passo: safeIndex + 1, domanda: q?.key, errore: currentError });
+      trackEvent("form_error", {
+        modulo: MODULO,
+        passo: safeIndex + 1,
+        domanda: q?.key,
+        errore: currentError,
+      });
       return;
     }
     setTouched(false);
     setError(null);
 
-    if (!iniziato.current) {
-      iniziato.current = true;
-      // Quanti aprono il modulo si sa già dalle visite di pagina; questo dice
-      // quanti hanno risposto almeno una volta. La differenza fra i due è il
-      // costo della prima domanda.
-      trackEvent("form_start");
-    }
-    trackEvent("form_step", { passo: safeIndex + 1, totale: total, domanda: q?.key });
+    // `form_start` è già partito alla prima interazione con un campo, che è
+    // prima di qui: si può arrivare a premere "Continua" solo dopo aver
+    // risposto.
+    trackEvent("form_step", {
+      modulo: MODULO,
+      passo: safeIndex + 1,
+      totale: total,
+      domanda: q?.key,
+    });
 
     if (safeIndex >= total - 1) {
       void submit();
@@ -317,7 +400,7 @@ function CheckUpPage() {
     // per schermata: vuol dire che una domanda è stata capita male, o che la
     // risposta data prima non convince più. Dove succede spesso, la domanda è
     // scritta male.
-    trackEvent("form_back", { passo: safeIndex + 1, domanda: q?.key });
+    trackEvent("form_back", { modulo: MODULO, passo: safeIndex + 1, domanda: q?.key });
     setIndex(safeIndex - 1);
   };
 
@@ -329,6 +412,7 @@ function CheckUpPage() {
   const goNextRef = useRef(goNext);
   useEffect(() => {
     goNextRef.current = goNext;
+    dove.current = { passo: safeIndex + 1, domanda: q?.key as string | undefined, totale: total };
   });
   const avanti = useCallback(() => goNextRef.current(), []);
 
@@ -365,11 +449,16 @@ function CheckUpPage() {
       console.error("Check-up non salvato:", esito.dettaglio);
       // Un invio fallito è un lead perso in silenzio: senza questo evento non
       // sapresti mai che è successo, perché chi lo subisce non te lo scrive.
-      trackEvent("form_submit_error", { dettaglio: esito.dettaglio });
+      trackEvent("form_submit_error", { modulo: MODULO, dettaglio: esito.dettaglio });
       setError({ messaggio: esito.messaggio, dettaglio: esito.dettaglio });
       return;
     }
-    trackEvent("form_submit");
+    // Prima di `navigate`: lo smontaggio della pagina segnalerebbe altrimenti
+    // un abbandono proprio a chi ha appena completato il modulo.
+    inviato.current = true;
+    // Quanto ci vuole davvero a compilarlo. Su diciotto domande è la risposta
+    // alla domanda se sia troppo lungo.
+    trackEvent("form_submit", { modulo: MODULO, secondi: durata() });
     navigate({ to: "/grazie", search: { tel: state.telefono.trim() } as never });
   };
 
