@@ -15,7 +15,6 @@ import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
-import { useScrollDepth } from "@/hooks/use-scroll-depth";
 
 export const Route = createFileRoute("/hr-esterno")({
   head: () => ({
@@ -70,8 +69,6 @@ const bioBadges: string[] = [
 ];
 
 function HrEsternoPage() {
-  useScrollDepth("hr-esterno");
-
   return (
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">
