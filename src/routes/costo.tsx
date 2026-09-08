@@ -18,6 +18,7 @@ import { Section, H2, Eyebrow } from "@/components/landing/Section";
 import { LogoCloud } from "@/components/landing/LogoCloud";
 import { StickyMobileCta } from "@/components/landing/StickyMobileCta";
 import { BlurReveal } from "@/components/landing/BlurReveal";
+import { useScrollDepth } from "@/hooks/use-scroll-depth";
 
 export const Route = createFileRoute("/costo")({
   head: () => ({
@@ -76,6 +77,8 @@ function CtaBlock({ dark = false }: { dark?: boolean }) {
 }
 
 function CostoPage() {
+  useScrollDepth("costo");
+
   return (
     <main className="bg-surface pb-24 md:pb-0">
       <AnnouncementBar tag="NUOVO">

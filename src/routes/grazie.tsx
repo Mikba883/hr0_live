@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
+import { useConsent } from "@/hooks/use-consent";
 import { trackAdsConversion } from "@/lib/google-ads";
 
 type Search = { tel?: string };
@@ -25,12 +26,20 @@ export const Route = createFileRoute("/grazie")({
 function GraziePage() {
   const { tel } = Route.useSearch();
 
+  const { marketing } = useConsent();
+
   // Si arriva qui solo dopo che la risposta è stata salvata: è il momento in
   // cui il lead esiste davvero. Nessuna attesa: trackAdsConversion carica il
   // tag da sé, quindi non serve dare tempo al root di averlo già caricato.
+  //
+  // L'effetto dipende dal consenso invece di girare una volta sola: chi arriva
+  // qui senza aver ancora scelto vede il banner proprio su questa pagina, e
+  // l'accettazione deve valere anche per la conversione appena avvenuta.
+  // `trackAdsConversion` non manda due volte lo stesso evento.
   useEffect(() => {
+    if (!marketing) return;
     trackAdsConversion();
-  }, []);
+  }, [marketing]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-5 py-16">

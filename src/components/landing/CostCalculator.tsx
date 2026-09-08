@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { trackEvent } from "@/lib/analytics";
 
 const eur = (n: number) =>
   new Intl.NumberFormat("it-IT", {
@@ -95,6 +97,47 @@ function useCountUp(target: number) {
   return display;
 }
 
+/**
+ * Segnala le regolazioni degli slider senza sommergere GA4.
+ *
+ * Uno slider trascinato emette un `change` a ogni pixel: mandarli tutti
+ * significherebbe centinaia di eventi per una singola sessione, il superamento
+ * dei limiti di GA4 e un report illeggibile. Si aspetta invece che la mano si
+ * fermi — 800 ms — e si manda solo il valore su cui si è fermata, che è l'unico
+ * interessante: nessuno vuole sapere che è passato da 41.000 a 42.000, ma dove
+ * ha deciso di lasciare il cursore.
+ *
+ * Il debounce è per campo: regolare la RAL non annulla l'evento in coda dei
+ * mesi.
+ */
+function useTracciaRegolazione() {
+  const timer = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const iniziato = useRef(false);
+
+  useEffect(() => {
+    const attivi = timer.current;
+    // Chi cambia pagina mentre un evento è in coda non deve lasciarsi dietro un
+    // timer che scatta su un componente smontato.
+    return () => {
+      for (const t of Object.values(attivi)) clearTimeout(t);
+    };
+  }, []);
+
+  return useCallback((campo: string, valore: number) => {
+    if (!iniziato.current) {
+      iniziato.current = true;
+      // Una sola volta per sessione di calcolo: dice quanti hanno toccato il
+      // calcolatore, che è il numero che serve per il tasso di interazione.
+      trackEvent("calculator_start");
+    }
+
+    clearTimeout(timer.current[campo]);
+    timer.current[campo] = setTimeout(() => {
+      trackEvent("calculator_adjust", { campo, valore });
+    }, 800);
+  }, []);
+}
+
 export function CostCalculator() {
   const [ral, setRal] = useState(40000);
   const [mesi, setMesi] = useState(4);
@@ -114,6 +157,13 @@ export function CostCalculator() {
   }, [ral, mesi, sbagliate, giorni]);
 
   const animato = useCountUp(totale);
+  const traccia = useTracciaRegolazione();
+
+  /** Aggiorna lo stato e segnala la regolazione, con lo stesso gesto. */
+  const regola = (campo: string, set: (v: number) => void) => (v: number) => {
+    set(v);
+    traccia(campo, v);
+  };
 
   const voci = [
     { label: "Ruolo scoperto", value: scoperto, color: "bg-danger" },
@@ -134,7 +184,7 @@ export function CostCalculator() {
             step={1000}
             suffix="€"
             format={eur}
-            onChange={setRal}
+            onChange={regola("ral", setRal)}
           />
           <Field
             label="Mesi in cui l'ultima posizione è rimasta scoperta"
@@ -143,7 +193,7 @@ export function CostCalculator() {
             max={12}
             suffix="mesi"
             format={(v) => `${v} ${v === 1 ? "mese" : "mesi"}`}
-            onChange={setMesi}
+            onChange={regola("mesi", setMesi)}
           />
           <Field
             label="Assunzioni sbagliate negli ultimi 2 anni"
@@ -151,7 +201,7 @@ export function CostCalculator() {
             min={0}
             max={5}
             format={(v) => `${v}`}
-            onChange={setSbagliate}
+            onChange={regola("sbagliate", setSbagliate)}
           />
           <Field
             label="Giorni al mese che dedichi a CV e colloqui"
@@ -160,7 +210,7 @@ export function CostCalculator() {
             max={6}
             suffix="gg"
             format={(v) => `${v} ${v === 1 ? "giorno" : "giorni"}`}
-            onChange={setGiorni}
+            onChange={regola("giorni", setGiorni)}
           />
         </div>
 
@@ -204,6 +254,16 @@ export function CostCalculator() {
 
           <a
             href="/check-up"
+            onClick={() =>
+              trackEvent("cta_click", {
+                etichetta: "Voglio capire come ridurlo",
+                destinazione: "/check-up",
+                pagina: typeof window === "undefined" ? "" : window.location.pathname,
+                // Il totale calcolato: dice se chi clicca è chi ha visto un
+                // numero grande o se il valore mostrato non c'entra.
+                totale_calcolato: Math.round(totale),
+              })
+            }
             className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-4 text-base font-semibold text-white shadow-[0_6px_20px_-8px_rgba(107,33,255,0.4)] transition-colors hover:bg-brand-dark"
           >
             Voglio capire come ridurlo →

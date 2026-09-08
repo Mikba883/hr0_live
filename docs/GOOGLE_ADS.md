@@ -1,11 +1,13 @@
 # Google Ads — tag e conversione del check-up
 
-Il sito carica il tag di Google (gtag.js) sulle pagine pubbliche e segnala una conversione
-quando qualcuno arriva su `/grazie`, cioè quando la risposta al check-up è stata salvata
-davvero — non quando preme il pulsante di invio.
+Il sito carica il tag di Google (gtag.js) sulle pagine pubbliche **solo dopo che il
+visitatore ha accettato i cookie di marketing**, e segnala una conversione quando qualcuno
+arriva su `/grazie`, cioè quando la risposta al check-up è stata salvata davvero — non
+quando preme il pulsante di invio.
 
 **Finché le variabili non sono impostate non viene caricato niente** e il sito si comporta
-come se Google Ads non esistesse.
+come se Google Ads non esistesse. Lo stesso vale finché manca il consenso: vedi
+[CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
 
 ---
 
@@ -36,6 +38,7 @@ Su **Lovable**, nelle variabili d'ambiente del progetto:
 VITE_GOOGLE_ADS_ID=AW-1234567890
 VITE_GOOGLE_ADS_CONVERSION_LABEL=AbCdEfGhIjKlMnOp
 VITE_GOOGLE_ADS_LEAD_VALUE=250        # opzionale
+VITE_CONSENT_MODE=basic               # opzionale: basic (default) | advanced
 ```
 
 Copiale, non riscriverle a mano: in quelle etichette `O` e `0`, `l` e `I` si somigliano, e
@@ -72,8 +75,9 @@ spendere**.
 
 ## 4. Verifica
 
-1. Sul sito, F12 → **Network**, filtra `googletagmanager`: deve comparire
-   `gtag/js?id=AW-…`.
+1. Sul sito, F12 → **Network**, filtra `googletagmanager`. **Prima di accettare il banner
+   non deve comparire niente**: se `gtag/js` si carica lo stesso, il consenso non sta
+   funzionando. Accetta e la richiesta `gtag/js?id=AW-…` compare.
 2. Compila il check-up fino a `/grazie` e cerca una chiamata a `googleadservices` o
    `google.com/pagead`.
 3. Su Google Ads lo stato dell'azione passa da **Inattivo** a **Attivo**. Può volerci
@@ -91,18 +95,26 @@ più leggibile.
 
 Tutto in `src/lib/google-ads.ts`:
 
-- **`loadGoogleAds()`** — inietta lo script in asincrono, una volta sola, e manda `js` e
-  `config`. Chiamata da `__root.tsx` al primo render, saltando `/admin`: l'area riservata è
-  privata e non ha senso mandarne le visite a Google.
-- **`trackAdsConversion()`** — chiamata da `grazie.tsx`.
+- **`initConsentMode()`** — prepara il `dataLayer` e scrive i segnali di consenso su
+  `denied`. Non fa richieste di rete. Chiamata da `__root.tsx` per prima, perché quei
+  segnali devono precedere l'esecuzione di gtag.js: dopo sarebbe troppo tardi.
+- **`applyAdsConsent(granted)`** — allinea il tag alla scelta. Con il consenso porta i
+  segnali a `granted` e carica lo script; senza, in `basic` non carica niente. Chiamata da
+  `__root.tsx` con la scelta memorizzata, saltando `/admin` — l'area riservata è privata e
+  non ha senso mandarne le visite a Google — e da `CookieBanner` a ogni cambio.
+- **`trackAdsConversion()`** — chiamata da `grazie.tsx`. Ricontrolla il consenso da sé.
 
-Due dettagli che sembrano piccoli e non lo sono:
+Tre dettagli che sembrano piccoli e non lo sono:
 
 **L'ordine degli effetti.** In React gli effetti dei componenti figli girano _prima_ di
 quelli della radice: quando `/grazie` invia la conversione, il tag caricato dal root non
-esiste ancora. Per questo `trackAdsConversion()` chiama a sua volta `loadGoogleAds()`, che
-è idempotente. Senza questo la conversione andrebbe persa in silenzio — e un ritardo a
-tempo non basta, perché chi chiude la pagina prima che scada non viene contato.
+esiste ancora. Per questo `trackAdsConversion()` carica il tag da sé, in modo idempotente.
+Senza questo la conversione andrebbe persa in silenzio — e un ritardo a tempo non basta,
+perché chi chiude la pagina prima che scada non viene contato.
+
+**Il consenso che arriva dopo.** Chi atterra su `/grazie` senza aver ancora scelto vede il
+banner proprio lì. L'effetto di `grazie.tsx` dipende quindi dal consenso, non gira una
+volta sola: se l'accettazione arriva dopo, la conversione parte in quel momento.
 
 **Il doppio conteggio.** Un refresh della pagina di ringraziamento rimanderebbe l'evento,
 quindi la conversione viene marcata nel `sessionStorage`. È la prima rete; la seconda è
@@ -110,21 +122,13 @@ l'impostazione "Conteggio: Una" del punto 1. Servono entrambe.
 
 ---
 
-## Consenso cookie — in sospeso
+## Consenso cookie
 
-Il tag di Google Ads scrive cookie di profilazione, che secondo il GDPR richiedono il
-consenso preventivo. **Oggi il sito non ha un banner cookie**, e il tag parte per tutti.
+Il tag parte solo dopo un consenso esplicito, raccolto dal banner. Il meccanismo — banner,
+Consent Mode v2, revoca, scadenza a sei mesi — è descritto in
+[CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
 
-C'è anche un'incoerenza da sanare: la cookie policy in `src/routes/cookie.tsx`, al punto 5,
-dichiara che _"al primo accesso viene mostrato un banner"_ e che nel footer c'è un link
-"Preferenze cookie". Nessuna delle due cose esiste. La tabella dei cookie al punto 3 è
-ancora quella di esempio.
-
-È una scelta consapevole per non bloccare la partenza delle campagne. Per sistemarla
-servono tre cose:
-
-1. un banner accetta / rifiuta / personalizza che blocchi il tag finché non c'è consenso —
-   si fa con **Google Consent Mode v2**, che permette comunque di mandare a Google dati
-   aggregati senza cookie quando il consenso manca;
-2. il link "Preferenze cookie" nel footer, per revocare;
-3. la tabella dei cookie compilata con quelli realmente installati.
+Quello che serve sapere qui: `loadGoogleAds()` non esiste più. Al suo posto c'è
+`applyAdsConsent(granted)`, che il root chiama con la scelta memorizzata e il banner
+richiama a ogni cambio. Chiamare direttamente il caricamento del tag, aggirando quella
+funzione, significa installare cookie di profilazione senza consenso.

@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Play } from "lucide-react";
 
+import { trackEvent } from "@/lib/analytics";
+
 export function VideoEmbed({
   videoId,
   title = "Video di presentazione",
@@ -23,7 +25,15 @@ export function VideoEmbed({
       }),
       "*",
     );
+    trackEvent(paused ? "video_resume" : "video_pause", { video_id: videoId, titolo: title });
     setPaused((p) => !p);
+  };
+
+  const avvia = () => {
+    // Il video parte solo da qui: la miniatura è un'immagine finché non si
+    // clicca, quindi questo evento è davvero "ha voluto vederlo".
+    trackEvent("video_play", { video_id: videoId, titolo: title });
+    setPlaying(true);
   };
 
   const src =
@@ -60,7 +70,7 @@ export function VideoEmbed({
       ) : (
         <button
           type="button"
-          onClick={() => setPlaying(true)}
+          onClick={avvia}
           aria-label="Riproduci il video con audio"
           className="group absolute inset-0 h-full w-full"
         >
