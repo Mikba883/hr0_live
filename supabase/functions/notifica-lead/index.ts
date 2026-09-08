@@ -12,7 +12,7 @@
  *   NOTIFICA_A        destinatario, es. tu@azienda.it (più indirizzi separati da virgola)
  *   NOTIFICA_DA       mittente verificato su Resend, es. "Check-up <lead@tuodominio.it>"
  *   NOTIFICA_SECRET   stringa segreta, la stessa impostata come header nel webhook
- *   SITO_URL          opzionale, es. https://hr0-sparkle-connect.lovable.app
+ *   SITO_URL          opzionale, es. https://hr0.it
  *
  * Deploy con --no-verify-jwt: l'autorizzazione la fa l'header segreto, non un
  * JWT. Senza quel flag basterebbe la chiave pubblica del sito per riempirti la

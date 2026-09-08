@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { urlAssoluto } from "@/lib/site";
 import { Check, X, Lightbulb } from "lucide-react";
 import { AnnouncementBar } from "@/components/landing/AnnouncementBar";
 import { CtaButton, CtaLink } from "@/components/landing/CtaButton";
@@ -17,9 +18,9 @@ export const Route = createFileRoute("/metodo")({
       { name: "description", content: "Costruisci il metodo di assunzione dentro la tua azienda, sulla prima posizione vera da coprire. Check-up gratuito di 30 minuti." },
       { property: "og:title", content: "Assumere senza agenzie: impara il metodo" },
       { property: "og:description", content: "Impari il processo sulla tua posizione aperta. Nessun corso teorico. Check-up gratuito." },
-      { property: "og:url", content: "https://hr0-sparkle-connect.lovable.app/metodo" },
+      { property: "og:url", content: urlAssoluto("/metodo") },
     ],
-    links: [{ rel: "canonical", href: "https://hr0-sparkle-connect.lovable.app/metodo" }],
+    links: [{ rel: "canonical", href: urlAssoluto("/metodo") }],
   }),
   component: MetodoPage,
 });
