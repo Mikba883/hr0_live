@@ -22,21 +22,26 @@ senza nessun errore da nessuna parte.
 1. Crea la proprietà su **analytics.google.com** → Amministrazione → Crea → Proprietà.
    Flusso di dati **Web**, con l'URL del sito. Google restituisce un **ID misurazione** nella
    forma `G-XXXXXXXXXX` — è quello che serve, non l'ID proprietà numerico.
-2. In **Vercel → Project → Settings → Environment Variables**, tipo **Config**, ambiente
-   **Production** soltanto:
+2. Nel **`.env` del repository**, insieme alle altre chiavi pubbliche:
 
    ```
    VITE_GA4_ID=G-XXXXXXXXXX
    ```
 
-   Solo Production, e **non** nel `.env` del repository: senza la variabile il codice non
-   raccoglie niente, ed è così che le anteprime dei branch e il sito di prova su Lovable
-   restano fuori dai dati. Metterla nel `.env` la darebbe a tutti gli ambienti, e su volumi
-   bassi bastano dieci sessioni di prova per distorcere il quadro.
+   **Non nel pannello di Vercel**, o almeno non lì soltanto. La configurazione Vite di
+   questo progetto passa da `@lovable.dev/vite-tanstack-config`, che fa una propria
+   "VITE_* env injection" al posto del meccanismo standard: una variabile che esiste solo
+   fra quelle di Vercel non arriva a `import.meta.env` e nel codice compilato vale
+   `undefined`. È stato provato — GA4 non partiva, e la conferma indiretta è che le due
+   variabili Supabase su Vercel hanno nomi che il codice non legge (`ANON_KEY` invece di
+   `PUBLISHABLE_KEY`): il sito funziona grazie al `.env`, non grazie a Vercel.
 
-3. **Rifai il deploy** (Deployments → `⋯` → Redeploy). Le variabili `VITE_` vengono scritte
-   dentro il JavaScript quando il sito viene costruito: salvarla non basta, Vercel non
-   ricostruisce da solo.
+3. **Commit, push e attendi il deploy.** Le variabili `VITE_` vengono scritte dentro il
+   JavaScript quando il sito viene costruito, non lette a ogni visita.
+
+Il prezzo di questa strada è che le anteprime e il sito di prova ereditano le stesse chiavi
+e mandano dati veri a Google. La separazione fra ambienti va quindi fatta **nel codice**,
+con un controllo sul dominio prima di caricare i tag, non con le variabili d'ambiente.
 
 Nel flusso di dati lascia acceso l'**Enhanced measurement** solo per `page_view`; scroll e
 click li mandiamo noi con parametri più utili, e tenere entrambi produrrebbe due conteggi
