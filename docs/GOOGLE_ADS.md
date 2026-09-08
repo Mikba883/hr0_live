@@ -122,6 +122,23 @@ l'impostazione "Conteggio: Una" del punto 1. Servono entrambe.
 
 ---
 
+## Gli altri eventi non sono conversioni
+
+Scroll, permanenza, click e avanzamento del questionario vanno a **GA4**, non qui: vedi
+[EVENTI_GA4.md](EVENTI_GA4.md). Ads conta solo gli eventi mappati su un'azione di
+conversione, e creare un'azione per ciascuno significherebbe vederseli sommare nella colonna
+"Conversioni".
+
+Quando GA4 raccoglie da qualche settimana quegli eventi si possono importare
+(**Obiettivi → Conversioni → + Nuova azione → Importa → Google Analytics 4**), ma **come
+conversioni secondarie, in "Osservazione"**: alimentano i pubblici per il remarketing senza
+guidare Smart Bidding. Un `form_start` promosso a conversione principale insegna alle
+campagne a cercare persone che iniziano moduli: ne troverà moltissime, la colonna
+Conversioni si riempirà, e i lead diminuiranno. **L'unica conversione principale resta il
+check-up compilato.**
+
+---
+
 ## Consenso cookie
 
 Il tag parte solo dopo un consenso esplicito, raccolto dal banner. Il meccanismo — banner,

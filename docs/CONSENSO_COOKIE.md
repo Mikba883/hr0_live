@@ -31,6 +31,7 @@ in vigore da gennaio 2022. In pratica:
 | `src/lib/consent.ts` | Stato della scelta: lettura, salvataggio, scadenza, notifiche |
 | `src/lib/gtag.ts` | Bootstrap gtag.js condiviso fra Ads e GA4, e segnali Consent Mode |
 | `src/lib/analytics.ts` | GA4: `trackEvent()`, l'unica via da cui passano gli eventi |
+| `src/hooks/use-page-tracking.ts` | Monta scroll, permanenza e click su ogni pagina pubblica |
 | `src/hooks/use-scroll-depth.ts` | Profondità di lettura, a soglie |
 | `src/hooks/use-consent.ts` | Espone lo stato ai componenti React |
 | `src/components/CookieBanner.tsx` | Il banner e il pannello per categoria |
@@ -104,17 +105,10 @@ ciascuno e vederseli sommare nella colonna "Conversioni", falsando ogni report e
 l'azione finisse fra le principali — mandando Smart Bidding a cercare gente che scorre le
 pagine invece di clienti.
 
-| Evento | Quando | Parametri |
-| --- | --- | --- |
-| `scroll_depth` | Superato il 25/50/75/90% della pagina | `percentuale`, `pagina` |
-| `cta_click` | Clic su un pulsante di invito all'azione | `etichetta`, `destinazione`, `pagina`, `variante` |
-| `calculator_start` | Prima regolazione del calcolatore | — |
-| `calculator_adjust` | Cursore fermo da 800 ms | `campo`, `valore` |
-| `video_play` / `video_pause` / `video_resume` | Comandi sul video | `video_id`, `titolo` |
-| `form_start` | Prima domanda superata | — |
-| `form_step` | Ogni domanda superata | `passo`, `totale`, `domanda` |
-| `form_error` | La validazione blocca l'avanzamento | `passo`, `domanda`, `errore` |
-| `form_submit` / `form_submit_error` | Esito dell'invio | `dettaglio` sull'errore |
+Sono una ventina, dalle soglie di scroll e permanenza ai click su ogni elemento
+interattivo, fino all'avanzamento e all'abbandono del check-up. **L'elenco completo, con i
+parametri e le definizioni personalizzate da registrare nella proprietà, è in
+[EVENTI_GA4.md](EVENTI_GA4.md).**
 
 Tre accorgimenti che tengono i dati onesti e il volume basso:
 
@@ -124,9 +118,12 @@ Tre accorgimenti che tengono i dati onesti e il volume basso:
 - **Lo scroll non si segnala se la pagina non scorre.** Su uno schermo alto una pagina
   corta si vede tutta da ferma: contarla come "letta al 90%" misurerebbe la finestra del
   browser, non l'interesse.
-- **`form_step` dice il passo superato**, non quello mostrato. Il rapporto fra `form_start`
-  e l'ultimo `form_step` è la curva di abbandono del questionario: con diciotto domande è
-  il dato più utile che questi eventi producono.
+- **La permanenza è quella attiva**, con la finestra in primo piano. Il tempo trascorso
+  misurerebbe quante schede tiene aperte la gente.
+
+Il rapporto fra `form_start` e `form_abandon`, con il passo a cui quest'ultimo scatta, è la
+curva di abbandono del questionario: con diciotto domande è il dato più utile che questi
+eventi producono.
 
 Ogni evento passa da `trackEvent()`, che **ricontrolla il consenso da sé**. Le chiamate
 sono sparse per tutta l'interfaccia: se ognuna dovesse ricordarsi il controllo, basterebbe
@@ -160,7 +157,8 @@ strumento installato sulla base di un consenso che non lo riguardava.
 5. Attiva il marketing e salva: `gtag/js?id=AW-…` compare in Network.
 5b. Con `VITE_GA4_ID` impostata, attiva le statistiche: scorri la pagina e premi una CTA,
    e in Network compaiono le chiamate a `google-analytics.com/g/collect`. Con le
-   statistiche rifiutate non ne parte nessuna.
+   statistiche rifiutate non ne parte nessuna. La verifica evento per evento è al punto 4
+   di [EVENTI_GA4.md](EVENTI_GA4.md).
 6. Riapri le preferenze, disattiva il marketing e salva: la pagina si ricarica e i cookie
    `_gcl_*` spariscono (**Application → Cookies**).
 

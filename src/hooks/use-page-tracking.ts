@@ -45,6 +45,11 @@ export function usePageTracking() {
     trackPageView();
   }, [pagina]);
 
+  // Dopo l'effetto del `page_view`, e l'ordine conta: gli effetti girano
+  // nell'ordine in cui sono dichiarati, e `useScrollDepth` misura subito la
+  // posizione appena si aggancia. Spostato più in su, quello scroll iniziale
+  // risulterebbe avvenuto sulla pagina precedente, perché per gtag la pagina
+  // cambia solo con il `set` di `trackPageView`.
   useScrollDepth(pagina);
   useTimeOnPage(pagina);
   useClickTracking(!!pagina);

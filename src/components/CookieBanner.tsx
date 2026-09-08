@@ -180,8 +180,9 @@ export function CookieBanner() {
                     </label>
                     <p className="mt-1 text-sm text-ink-soft">
                       Google Analytics: registra in forma aggregata come vengono usate le
-                      pagine — quanto si scorre, quali pulsanti si premono, dove ci si ferma
-                      nel questionario. Ci serve a capire cosa non funziona.
+                      pagine — quanto si scorre, quanto a lungo ci si resta, quali pulsanti
+                      si premono, dove ci si ferma nel questionario. Ci serve a capire cosa
+                      non funziona.
                     </p>
                   </div>
                   <input

@@ -28,7 +28,10 @@ const TOLLERANZA_MS = 50;
  *
  * - **`time_on_page`** alle soglie di 10/30/60/180 secondi. È il numero
  *   leggibile senza configurare niente: quanti hanno superato il minuto si
- *   conta contando gli eventi.
+ *   conta contando gli eventi. Il parametro si chiama `soglia` e non `secondi`
+ *   perché è un'etichetta, non una durata: in GA4 lo stesso nome non può
+ *   essere insieme dimensione (per raggruppare) e metrica (per sommare), e
+ *   `secondi` è già la durata vera di `form_submit` e `form_abandon`.
  * - **`page_engagement`** quando la pagina viene lasciata o messa da parte, con
  *   i secondi *di quel tratto*. È incrementale, come lo `user_engagement` di
  *   GA4: chi esce e rientra ne manda più d'uno, e nei report **va sommato**,
@@ -70,7 +73,7 @@ export function useTimeOnPage(pagina: string | null) {
       for (const soglia of SOGLIE) {
         if (raggiunte.has(soglia) || ms + TOLLERANZA_MS < soglia * 1000) continue;
         raggiunte.add(soglia);
-        trackEvent("time_on_page", { secondi: soglia, pagina });
+        trackEvent("time_on_page", { soglia, pagina });
       }
       programma();
     }
