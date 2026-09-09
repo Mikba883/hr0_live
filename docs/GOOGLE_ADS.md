@@ -52,12 +52,26 @@ conversione.
 **Poi commit e push.** Le variabili `VITE_` vengono scritte dentro il JavaScript quando il
 sito viene costruito, non lette a ogni visita.
 
-### ⚠️ Le anteprime ereditano le stesse chiavi
+### Le anteprime ereditano le chiavi, ma non caricano più i tag
 
 Il `.env` è tracciato da git, quindi ce l'hanno anche le anteprime dei branch e il sito di
-prova: **chi completa il check-up lì accettando i cookie marketing fa partire una
-conversione vera.** Spostarle su Vercel non è la soluzione — là non vengono lette affatto.
-La separazione va fatta nel codice, con un controllo sul dominio prima di caricare i tag.
+prova. Per un periodo questo è bastato a far partire i tag ovunque: la diagnostica di
+Google Ads aveva rilevato `AW-…` su **29 domini** — una ventina di anteprime Lovable, tre
+deploy Vercel, due progetti vecchi e, unico legittimo, `www.hr0.it`.
+
+La separazione è ora nel codice: `tracciamentoAbilitato()` in [`src/lib/site.ts`](../src/lib/site.ts)
+autorizza `hr0.it` e `www.hr0.it`, e le quattro funzioni che possono parlare con Google —
+`applyAdsConsent`, `trackAdsConversion`, `applyAnalyticsConsent`, `ga4Pronto` — escono
+subito altrove. Su un'anteprima il banner compare e la scelta si salva, ma nessuno script
+viene iniettato e nessuna conversione parte.
+
+**Per aggiungere un dominio** (un secondo sito che deve condividere lo stesso account
+Ads) si tocca solo `DOMINI_TRACCIAMENTO`. Il controllo va chiamato dentro le funzioni e
+mai al livello del modulo: dipende da `window`, e una costante calcolata all'import
+varrebbe `false` sul server e `true` dopo l'idratazione, facendo saltare il confronto a
+React.
+
+Spostare le chiavi su Vercel non sarebbe comunque servito — là non vengono lette affatto.
 
 Sono variabili pubbliche, finiscono nel JavaScript della pagina: per un ID di conversione
 va bene. **Non aggiungere mai lì chiavi segrete** (Resend, `service_role` di Supabase) —

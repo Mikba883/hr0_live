@@ -39,9 +39,11 @@ senza nessun errore da nessuna parte.
 3. **Commit, push e attendi il deploy.** Le variabili `VITE_` vengono scritte dentro il
    JavaScript quando il sito viene costruito, non lette a ogni visita.
 
-Il prezzo di questa strada è che le anteprime e il sito di prova ereditano le stesse chiavi
-e mandano dati veri a Google. La separazione fra ambienti va quindi fatta **nel codice**,
-con un controllo sul dominio prima di caricare i tag, non con le variabili d'ambiente.
+Il prezzo di questa strada sarebbe che le anteprime e il sito di prova ereditano le stesse
+chiavi. La separazione fra ambienti è quindi fatta **nel codice** e non con le variabili
+d'ambiente: `tracciamentoAbilitato()` in [`src/lib/site.ts`](../src/lib/site.ts) autorizza
+solo `hr0.it` e `www.hr0.it`, e `applyAnalyticsConsent` e `ga4Pronto` escono subito
+altrove. Su un'anteprima gli eventi elencati qui sotto sono no-op silenziosi.
 
 Nel flusso di dati lascia acceso l'**Enhanced measurement** solo per `page_view`; scroll e
 click li mandiamo noi con parametri più utili, e tenere entrambi produrrebbe due conteggi

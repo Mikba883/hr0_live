@@ -1,5 +1,6 @@
 import { getConsentSnapshot, hydrateConsent } from "./consent";
 import { initConsentMode, isConfigured, loadGtag, updateConsent } from "./gtag";
+import { tracciamentoAbilitato } from "./site";
 
 /**
  * Eventi di interazione (GA4).
@@ -33,6 +34,7 @@ function loadGa4() {
 /** Allinea GA4 alla scelta dell'utente. Idempotente. */
 export function applyAnalyticsConsent(granted: boolean) {
   if (typeof window === "undefined" || !GA4_ID) return;
+  if (!tracciamentoAbilitato()) return;
 
   initConsentMode();
   updateConsent({ analytics_storage: granted ? "granted" : "denied" });
@@ -51,6 +53,7 @@ export function applyAnalyticsConsent(granted: boolean) {
  */
 function ga4Pronto(): boolean {
   if (typeof window === "undefined" || !GA4_ID) return false;
+  if (!tracciamentoAbilitato()) return false;
 
   // Gli effetti dei componenti figli girano prima di quelli della radice: il
   // primo evento di una pagina può arrivare mentre la scelta salvata non è
