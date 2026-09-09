@@ -1,5 +1,6 @@
 import { getConsentSnapshot } from "./consent";
 import { initConsentMode, loadGtag, updateConsent } from "./gtag";
+import { tracciamentoAbilitato } from "./site";
 
 export const GOOGLE_ADS_ID = import.meta.env.VITE_GOOGLE_ADS_ID as string | undefined;
 export const GOOGLE_ADS_CONVERSION_LABEL = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as
@@ -55,6 +56,7 @@ function loadTag() {
  */
 export function applyAdsConsent(granted: boolean) {
   if (typeof window === "undefined" || !GOOGLE_ADS_ID) return;
+  if (!tracciamentoAbilitato()) return;
 
   initConsentMode();
   const stato = granted ? "granted" : "denied";
@@ -87,6 +89,7 @@ export function applyAdsConsent(granted: boolean) {
  */
 export function trackAdsConversion(params?: { value?: number; currency?: string }) {
   if (typeof window === "undefined") return;
+  if (!tracciamentoAbilitato()) return;
   if (!GOOGLE_ADS_ID || !GOOGLE_ADS_CONVERSION_LABEL) return;
   if (!getConsentSnapshot().decision?.marketing && CONSENT_MODE !== "advanced") return;
 
