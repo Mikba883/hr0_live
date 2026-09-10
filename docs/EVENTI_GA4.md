@@ -111,9 +111,16 @@ Senza, i due imbuti si sommerebbero in uno che non descrive nessuno dei due.
 | `form_abandon` | Uscita a compilazione iniziata e non inviata | `modulo`, `passo`, `totale`, `domanda`, `secondi` |
 | `form_submit` | Invio riuscito | `modulo`, `secondi` |
 | `form_submit_error` | Invio fallito | `modulo`, `dettaglio` |
+| `generate_lead` | Lead acquisito: `/grazie` è stata raggiunta | `modulo` |
 
-Tre cose che vale la pena sapere prima di leggere questi numeri:
+Quattro cose che vale la pena sapere prima di leggere questi numeri:
 
+- **`generate_lead` e `form_submit` non sono lo stesso evento**, e la differenza fra i due
+  conteggi è informazione: `form_submit` dice che l'invio è riuscito, `generate_lead` che
+  la pagina di conferma è stata effettivamente raggiunta. È il nome raccomandato da GA4, il
+  che significa che si può marcare come **evento chiave** dall'interfaccia senza definire
+  niente. È anche l'unico evento GA4 confrontabile con la colonna "Conversioni" di Google
+  Ads, che viene alimentata dalla stessa pagina.
 - **`form_start` scatta alla prima interazione con un campo**, non alla prima risposta
   valida. Chi scrive il nome, ci ripensa e se ne va ha cominciato a compilare: contarlo solo
   dopo un "Continua" riuscito nasconderebbe l'abbandono più precoce, che è quello che costa
@@ -273,5 +280,18 @@ ricontrollato lì dentro, non serve verificarlo nel chiamante. Poi, perché serv
 
 ## 8. Consenso
 
-Il tag parte solo dopo un consenso esplicito alle statistiche. Il meccanismo — banner,
-Consent Mode v2, revoca, scadenza a sei mesi — è in [CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
+> [!WARNING]
+> **Oggi il banner è disattivato** (`CONSENSO_RICHIESTO = false` in `src/lib/site.ts`) e
+> tutti gli eventi di questo documento vengono raccolti da ogni visitatore, senza consenso
+> preventivo. È una scelta del titolare del sito, non un difetto dell'impianto.
+
+Con `CONSENSO_RICHIESTO = true` il tag parte solo dopo un consenso esplicito alle
+statistiche. Il meccanismo — banner, Consent Mode v2, revoca, scadenza a sei mesi — e la
+tabella di cosa cambia fra i due stati sono in
+[CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
+
+Una conseguenza pratica di cui tenere conto leggendo i report: **i numeri prima e dopo
+questo cambio non sono confrontabili.** Prima arrivavano solo gli eventi di chi accettava
+il banner, che era una minoranza autoselezionata; da adesso arriva tutto il traffico. Un
+salto verticale nei grafici alla data del rilascio è l'effetto atteso, non un problema di
+misurazione.

@@ -14,10 +14,11 @@ import appCss from "../styles.css?url";
 import { CookieBanner } from "../components/CookieBanner";
 import { usePageTracking } from "../hooks/use-page-tracking";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { getConsentSnapshot, hydrateConsent } from "../lib/consent";
+import { analyticsConsentito, hydrateConsent, marketingConsentito } from "../lib/consent";
 import { applyAnalyticsConsent } from "../lib/analytics";
 import { applyAdsConsent } from "../lib/google-ads";
 import { initConsentMode } from "../lib/gtag";
+import { CONSENSO_RICHIESTO } from "../lib/site";
 
 function NotFoundComponent() {
   return (
@@ -143,9 +144,9 @@ function RootComponent() {
   const areaRiservata = pathname.startsWith("/admin");
 
   useEffect(() => {
-    // Prima i segnali di consenso negati, poi tutto il resto: devono trovarsi
-    // nel dataLayer prima che gtag.js possa girare, altrimenti il tag parte in
-    // stato consentito.
+    // I segnali di consenso vanno nel dataLayer prima che gtag.js possa
+    // girare: dopo sarebbe troppo tardi, il tag sarebbe già partito con lo
+    // stato sbagliato.
     initConsentMode();
     hydrateConsent();
 
@@ -155,18 +156,17 @@ function RootComponent() {
     // navigazioni.
     if (window.location.pathname.startsWith("/admin")) return;
 
-    // Chi ha già scelto non rivede il banner: applichiamo la sua decisione.
-    // Senza decisione, `false` non carica niente (o carica il tag Ads in stato
-    // negato, se il consenso è configurato in modalità avanzata).
-    const decisione = getConsentSnapshot().decision;
-    applyAdsConsent(decisione?.marketing ?? false);
-    applyAnalyticsConsent(decisione?.analytics ?? false);
+    // Con il banner spento sono entrambi `true` e i due tag partono subito, al
+    // primo caricamento di qualsiasi pagina. Con il banner acceso valgono la
+    // scelta già memorizzata, e senza scelta non caricano niente.
+    applyAdsConsent(marketingConsentito());
+    applyAnalyticsConsent(analyticsConsentito());
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      {areaRiservata ? null : <CookieBanner />}
+      {CONSENSO_RICHIESTO && !areaRiservata ? <CookieBanner /> : null}
     </QueryClientProvider>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { openConsentPreferences } from "@/lib/consent";
 import { GA4_ID } from "@/lib/analytics";
 import { GOOGLE_ADS_ID } from "@/lib/google-ads";
+import { CONSENSO_RICHIESTO } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -19,8 +20,11 @@ export function Footer() {
 
               Senza nessuno strumento opzionale configurato non c'è niente da
               autorizzare e il banner non compare: il link aprirebbe il vuoto.
+              Stessa ragione con CONSENSO_RICHIESTO a `false`: non c'è nessuna
+              preferenza da riaprire, e un pulsante che non fa niente è peggio
+              di un pulsante che non c'è.
             */}
-            {GOOGLE_ADS_ID || GA4_ID ? (
+            {CONSENSO_RICHIESTO && (GOOGLE_ADS_ID || GA4_ID) ? (
               <button
                 type="button"
                 onClick={openConsentPreferences}

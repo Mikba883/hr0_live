@@ -1,4 +1,4 @@
-import { getConsentSnapshot, hydrateConsent } from "./consent";
+import { analyticsConsentito, hydrateConsent } from "./consent";
 import { initConsentMode, isConfigured, loadGtag, updateConsent } from "./gtag";
 import { tracciamentoAbilitato } from "./site";
 
@@ -31,17 +31,27 @@ function loadGa4() {
   loadGtag(GA4_ID, { send_page_view: false });
 }
 
-/** Allinea GA4 alla scelta dell'utente. Idempotente. */
+/**
+ * Allinea GA4 alla scelta dell'utente. Idempotente.
+ *
+ * Senza banner il parametro non decide niente: `analyticsConsentito()` è già
+ * `true` e GA4 parte comunque. Il controllo sta qui e non solo nel chiamante
+ * perché questa funzione è l'unico punto che carica GA4, e una chiamata futura
+ * che passasse `false` per distrazione spegnerebbe in silenzio la misurazione
+ * dell'intero sito.
+ */
 export function applyAnalyticsConsent(granted: boolean) {
   if (typeof window === "undefined" || !GA4_ID) return;
   if (!tracciamentoAbilitato()) return;
 
+  const attivo = granted || analyticsConsentito();
+
   initConsentMode();
-  updateConsent({ analytics_storage: granted ? "granted" : "denied" });
+  updateConsent({ analytics_storage: attivo ? "granted" : "denied" });
 
   // Nessuna modalità "advanced" qui: senza consenso alle statistiche non c'è
   // niente da misurare, e i ping anonimi servono ad Ads, non a GA4.
-  if (granted) loadGa4();
+  if (attivo) loadGa4();
 }
 
 /**
@@ -58,9 +68,9 @@ function ga4Pronto(): boolean {
   // Gli effetti dei componenti figli girano prima di quelli della radice: il
   // primo evento di una pagina può arrivare mentre la scelta salvata non è
   // ancora stata letta, e senza questo verrebbe scartato come se il consenso
-  // non ci fosse. È idempotente.
+  // non ci fosse. È idempotente, e senza banner non fa nulla.
   hydrateConsent();
-  if (!getConsentSnapshot().decision?.analytics) return false;
+  if (!analyticsConsentito()) return false;
 
   if (!isConfigured(GA4_ID)) loadGa4();
   return !!window.gtag;
@@ -123,4 +133,26 @@ export function trackCtaClick(params: CtaParams) {
     pagina: typeof window === "undefined" ? "" : window.location.pathname,
     ...params,
   });
+}
+
+/**
+ * Lead acquisito: la richiesta di check-up è stata salvata davvero.
+ *
+ * `generate_lead` è uno dei nomi raccomandati da GA4, non un'invenzione: usarlo
+ * significa che la proprietà lo riconosce e lo si può marcare come conversione
+ * ("evento chiave") dall'interfaccia, senza definizioni personalizzate.
+ *
+ * Mancava, ed era il buco più grosso: la conversione veniva mandata solo a
+ * Google Ads, quindi in GA4 l'imbuto finiva sull'ultimo `form_submit` e il
+ * confronto fra le due piattaforme era impossibile — l'unico numero che conta
+ * esisteva in un solo posto. Vive accanto alla conversione Ads su `/grazie`,
+ * non nel punto in cui si preme "invia": lì la risposta del server non è ancora
+ * arrivata, e un errore di salvataggio conterebbe come lead.
+ *
+ * Il doppio invio lo evita `usePageTracking`, che monta questa pagina una volta
+ * sola per navigazione; un ricaricamento manuale ne conta uno in più, ed è
+ * accettabile in GA4 dove — a differenza di Ads — nessuna offerta ci si basa.
+ */
+export function trackLead(params?: Record<string, unknown>) {
+  trackEvent("generate_lead", { modulo: "check-up", ...params });
 }

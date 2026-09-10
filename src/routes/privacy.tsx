@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Footer } from "@/components/landing/Footer";
+import { CONSENSO_RICHIESTO } from "@/lib/site";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -121,7 +122,11 @@ function PrivacyPage() {
                   <tr className="border-b border-hairline">
                     <td className="py-3 pr-4">Cookie analitici e di profilazione di terze parti</td>
                     <td className="py-3 pr-4">Consenso — art. 6.1.a</td>
-                    <td className="py-3 pr-4">Facoltativo, revocabile</td>
+                    <td className="py-3 pr-4">
+                      {CONSENSO_RICHIESTO
+                        ? "Facoltativo, revocabile"
+                        : "Attivi dalla prima visita; disattivabili — punto 5 della Cookie Policy"}
+                    </td>
                   </tr>
                   <tr>
                     <td className="py-3 pr-4">Difesa di un diritto in sede giudiziaria</td>
@@ -167,7 +172,12 @@ function PrivacyPage() {
               <li>piattaforma di prenotazione appuntamenti;</li>
               <li>piattaforma di email marketing;</li>
               <li>consulenti fiscali, contabili e legali;</li>
-              <li>Google Ireland Ltd., per la misurazione delle conversioni delle campagne pubblicitarie e per le statistiche di utilizzo del sito, in entrambi i casi previo consenso dell'interessato e limitatamente alle categorie che ha accettato.</li>
+              <li>
+                Google Ireland Ltd., per la misurazione delle conversioni delle campagne pubblicitarie e per le statistiche di utilizzo del sito.{" "}
+                {CONSENSO_RICHIESTO
+                  ? "In entrambi i casi previo consenso dell'interessato e limitatamente alle categorie che ha accettato."
+                  : "Gli strumenti sono attivi dalla prima visita: le modalità per disattivarli sono indicate al punto 5 della Cookie Policy."}
+              </li>
             </ul>
             <p className="mt-3">
               I dati non sono in alcun caso diffusi né ceduti a terzi per finalità di marketing autonomo.
