@@ -1,8 +1,17 @@
 # Consenso cookie — come funziona
 
-Il sito non installa strumenti di profilazione finché il visitatore non li accetta. Questa
-pagina spiega come è fatto il meccanismo, quali vincoli non sono negoziabili e cosa fare
-quando si aggiunge un nuovo strumento di tracciamento.
+Questa pagina spiega come è fatto il meccanismo del consenso, quali vincoli non sono
+negoziabili e cosa fare quando si aggiunge un nuovo strumento di tracciamento.
+
+> [!WARNING]
+> **Oggi il meccanismo descritto qui è spento.** `CONSENSO_RICHIESTO` in `src/lib/site.ts`
+> vale `false` per scelta del titolare del sito: il banner non compare, GA4 e il tag di
+> Google Ads partono al primo caricamento di ogni pagina e ogni visitatore viene misurato.
+> Il resto del documento descrive il comportamento con `CONSENSO_RICHIESTO = true`, che è
+> ancora interamente implementato e torna in funzione rimettendo quella costante a `true`.
+>
+> Quel che segue serve quindi a due cose: capire cosa si riaccende con quella riga, e
+> sapere cosa oggi non c'è. Il paragrafo 9 elenca esattamente cosa cambia fra i due stati.
 
 > Questo documento descrive un'implementazione tecnica. Non sostituisce il parere di chi
 > segue la privacy: i testi delle informative andrebbero fatti rileggere prima di
@@ -147,6 +156,25 @@ strumento installato sulla base di un consenso che non lo riguardava.
 
 ## 7. Verifica
 
+### Con `CONSENSO_RICHIESTO = false` (lo stato di oggi)
+
+Da fare **su `https://hr0.it`**, non su un'anteprima: fuori dai domini di produzione
+`tracciamentoAbilitato()` spegne tutto e non vedresti partire niente, senza nessun errore.
+
+1. Finestra anonima su `https://hr0.it/costo`: **nessun banner**.
+2. F12 → **Network**, filtro `googletagmanager`: partono **due** richieste `gtag/js`, una
+   per `G-…` e una per `AW-…`. Una sola significa che uno dei due ID manca in `.env`.
+3. Filtro `collect`: già al caricamento compare una chiamata a
+   `google-analytics.com/g/collect` con `en=page_view`. Scorri la pagina e premi una CTA:
+   ne compaiono altre con `en=scroll_depth` e `en=cta_click`.
+4. GA4 → **Tempo reale**: ti vedi comparire entro pochi secondi, senza aver accettato
+   nulla.
+5. Completa un check-up fino a `/grazie`: in Network parte `en=generate_lead` verso GA4 e
+   una richiesta verso `googleads.g.doubleclick.net` o `google.com/pagead` per la
+   conversione Ads.
+
+### Con `CONSENSO_RICHIESTO = true`
+
 1. Finestra anonima, F12 → **Application → Local Storage**: `hr0.cookie-consent` non
    esiste e il banner è visibile.
 2. **Network**, filtro `googletagmanager`: **nessuna richiesta**. Se `gtag/js` compare
@@ -162,7 +190,37 @@ strumento installato sulla base di un consenso che non lo riguardava.
 6. Riapri le preferenze, disattiva il marketing e salva: la pagina si ricarica e i cookie
    `_gcl_*` spariscono (**Application → Cookies**).
 
-## 8. Cosa resta aperto
+## 8. L'interruttore `CONSENSO_RICHIESTO`
+
+Sta in `src/lib/site.ts` ed è una costante sola. Con `false` — **il valore di oggi** — il
+sito si comporta così:
+
+| | `CONSENSO_RICHIESTO = true` | `CONSENSO_RICHIESTO = false` (oggi) |
+| --- | --- | --- |
+| Banner | Mostrato finché non si sceglie | Mai mostrato |
+| Segnali Consent Mode di default | Tutti `denied`, `wait_for_update: 500` | Tutti `granted` |
+| gtag.js | Caricato dopo l'accettazione | Caricato all'avvio di ogni pagina pubblica |
+| Eventi GA4 | Solo da chi accetta le statistiche | Da tutti i visitatori |
+| Conversione Ads | Solo da chi accetta il marketing | Sempre |
+| `hr0.cookie-consent` in localStorage | Scritto | Mai scritto |
+| Link "Preferenze cookie" (footer, `/cookie`) | Presente | Nascosto |
+| Testo di `/cookie` e `/privacy` | Descrive il consenso preventivo | Dichiara che gli strumenti sono attivi dalla prima visita e indica come disattivarli |
+
+Le due condizioni non si controllano mai a mano leggendo `decision`: si passa da
+`marketingConsentito()` e `analyticsConsentito()` in `src/lib/consent.ts`, che sono l'unico
+posto dove la regola è scritta. Un controllo copiato altrove leggerebbe `decision === null`
+— nessuno ha scelto niente, perché non gli è stato chiesto — e spegnerebbe il tracciamento
+esattamente nel caso in cui deve restare acceso.
+
+**Cosa NON fa questo interruttore:** non tocca `tracciamentoAbilitato()`. Il filtro sui
+domini di produzione resta attivo in entrambi gli stati, ed è quello che impedisce alle
+anteprime di sparare dati veri in Ads.
+
+**Prima di rimetterlo a `true`** basta la riga: banner, gate e informative tornano da soli.
+Va però alzata `POLICY_VERSION` in `src/lib/consent.ts` se nel frattempo sono cambiati gli
+strumenti installati.
+
+## 9. Cosa resta aperto
 
 - **Il footer non c'è su `/check-up` e `/grazie`.** Su quelle due pagine manca quindi il
   link "Preferenze cookie". Il banner e le informative restano raggiungibili, ma la revoca

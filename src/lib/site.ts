@@ -50,3 +50,25 @@ export function tracciamentoAbilitato(): boolean {
   if (typeof window === "undefined") return false;
   return DOMINI_TRACCIAMENTO.has(window.location.hostname);
 }
+
+/**
+ * Se il sito debba chiedere il consenso prima di attivare i tag di Google.
+ *
+ * **Oggi è `false` per scelta del titolare del sito.** Con `false` il banner
+ * non compare, GA4 e Google Ads partono al primo caricamento di ogni pagina, e
+ * ogni evento viene misurato per tutti i visitatori.
+ *
+ * Perché sia una costante e non una rimozione del codice: la scelta è
+ * giuridica, non tecnica, e le scelte giuridiche cambiano. Con `true` tornano
+ * banner, gate sul consenso e link "Preferenze cookie" esattamente com'erano —
+ * l'intera macchina è ancora qui, non è stata smontata. Cancellarla avrebbe
+ * reso il ritorno un lavoro di mezza giornata invece di una riga.
+ *
+ * Da sapere prima di lasciarlo su `false`: l'art. 122 del Codice Privacy
+ * subordina al consenso preventivo l'archiviazione di informazioni sul
+ * dispositivo dell'utente per finalità diverse da quelle strettamente
+ * tecniche, e i cookie di Google Ads e GA4 rientrano fra quelle. Il testo
+ * delle pagine `/cookie` e `/privacy` segue questa costante e descrive quel
+ * che accade davvero in entrambi i casi.
+ */
+export const CONSENSO_RICHIESTO = false;

@@ -1,4 +1,4 @@
-import { getConsentSnapshot } from "./consent";
+import { marketingConsentito } from "./consent";
 import { initConsentMode, loadGtag, updateConsent } from "./gtag";
 import { tracciamentoAbilitato } from "./site";
 
@@ -58,15 +58,19 @@ export function applyAdsConsent(granted: boolean) {
   if (typeof window === "undefined" || !GOOGLE_ADS_ID) return;
   if (!tracciamentoAbilitato()) return;
 
+  // Come in `applyAnalyticsConsent`: senza banner il parametro non decide
+  // niente, il tag parte comunque.
+  const attivo = granted || marketingConsentito();
+
   initConsentMode();
-  const stato = granted ? "granted" : "denied";
+  const stato = attivo ? "granted" : "denied";
   updateConsent({
     ad_storage: stato,
     ad_user_data: stato,
     ad_personalization: stato,
   });
 
-  if (granted || CONSENT_MODE === "advanced") loadTag();
+  if (attivo || CONSENT_MODE === "advanced") loadTag();
 }
 
 /**
@@ -91,7 +95,7 @@ export function trackAdsConversion(params?: { value?: number; currency?: string 
   if (typeof window === "undefined") return;
   if (!tracciamentoAbilitato()) return;
   if (!GOOGLE_ADS_ID || !GOOGLE_ADS_CONVERSION_LABEL) return;
-  if (!getConsentSnapshot().decision?.marketing && CONSENT_MODE !== "advanced") return;
+  if (!marketingConsentito() && CONSENT_MODE !== "advanced") return;
 
   try {
     if (sessionStorage.getItem(SENT_KEY)) return;

@@ -100,9 +100,11 @@ spendere**.
 
 ## 4. Verifica
 
-1. Sul sito, F12 → **Network**, filtra `googletagmanager`. **Prima di accettare il banner
-   non deve comparire niente**: se `gtag/js` si carica lo stesso, il consenso non sta
-   funzionando. Accetta e la richiesta `gtag/js?id=AW-…` compare.
+1. Su `https://hr0.it` (non su un'anteprima: fuori dai domini di produzione non parte
+   niente per disegno), F12 → **Network**, filtra `googletagmanager`. Con il banner
+   disattivato `gtag/js?id=AW-…` **deve comparire subito, senza fare niente**. Con
+   `CONSENSO_RICHIESTO = true` invece non deve comparire nulla prima di aver accettato: se
+   si carica lo stesso, il consenso non sta funzionando.
 2. Compila il check-up fino a `/grazie` e cerca una chiamata a `googleadservices` o
    `google.com/pagead`.
 3. Su Google Ads lo stato dell'azione passa da **Inattivo** a **Attivo**. Può volerci
@@ -166,11 +168,18 @@ check-up compilato.**
 
 ## Consenso cookie
 
-Il tag parte solo dopo un consenso esplicito, raccolto dal banner. Il meccanismo — banner,
-Consent Mode v2, revoca, scadenza a sei mesi — è descritto in
-[CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
+> [!WARNING]
+> **Oggi il banner è disattivato** (`CONSENSO_RICHIESTO = false` in `src/lib/site.ts`): il
+> tag di Google Ads parte al primo caricamento di ogni pagina e la conversione viene
+> inviata per ogni check-up completato, senza consenso preventivo. La tabella di cosa
+> cambia fra i due stati è in [CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
+
+Con `CONSENSO_RICHIESTO = true` il tag parte solo dopo un consenso esplicito, raccolto dal
+banner. Il meccanismo — banner, Consent Mode v2, revoca, scadenza a sei mesi — è descritto
+in [CONSENSO_COOKIE.md](CONSENSO_COOKIE.md).
 
 Quello che serve sapere qui: `loadGoogleAds()` non esiste più. Al suo posto c'è
-`applyAdsConsent(granted)`, che il root chiama con la scelta memorizzata e il banner
-richiama a ogni cambio. Chiamare direttamente il caricamento del tag, aggirando quella
-funzione, significa installare cookie di profilazione senza consenso.
+`applyAdsConsent(granted)`, che il root chiama con lo stato in vigore e il banner — quando
+c'è — richiama a ogni cambio. Chiamare direttamente il caricamento del tag, aggirando
+quella funzione, salta insieme al consenso anche il filtro sui domini di produzione: il tag
+finirebbe sulle anteprime, ed è già costato dati veri inquinati.

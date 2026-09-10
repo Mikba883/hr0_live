@@ -10,6 +10,8 @@
  * consenso, e sta in `google-ads.ts` e `analytics.ts`.
  */
 
+import { CONSENSO_RICHIESTO } from "./site";
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -30,6 +32,13 @@ const configurati = new Set<string>();
  * segnali `default` devono trovarsi nel `dataLayer` *prima* che gtag.js venga
  * eseguito, altrimenti il tag parte già in stato consentito e la scelta arriva
  * troppo tardi. Per questo si chiama all'avvio dell'app, non al consenso.
+ *
+ * Senza banner i segnali partono già concessi. Non è un dettaglio ridondante
+ * con l'`update` che arriva subito dopo: un `default` negato fa partire gtag
+ * in modalità senza cookie, e i primi eventi — `page_view` compreso, che su
+ * questo sito parte in un effetto React, cioè nei primi millisecondi —
+ * verrebbero inviati senza identificatore e non si aggancerebbero alla
+ * sessione. Il `wait_for_update` cade con essi: nessuna scelta da attendere.
  */
 export function initConsentMode() {
   if (typeof window === "undefined" || consentModeReady) return;
@@ -41,6 +50,16 @@ export function initConsentMode() {
       // eslint-disable-next-line prefer-rest-params
       window.dataLayer!.push(arguments);
     };
+  }
+
+  if (!CONSENSO_RICHIESTO) {
+    window.gtag("consent", "default", {
+      ad_storage: "granted",
+      ad_user_data: "granted",
+      ad_personalization: "granted",
+      analytics_storage: "granted",
+    });
+    return;
   }
 
   window.gtag("consent", "default", {

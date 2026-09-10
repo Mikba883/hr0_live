@@ -4,6 +4,7 @@ import { Footer } from "@/components/landing/Footer";
 import { openConsentPreferences } from "@/lib/consent";
 import { GA4_ID } from "@/lib/analytics";
 import { GOOGLE_ADS_ID } from "@/lib/google-ads";
+import { CONSENSO_RICHIESTO } from "@/lib/site";
 
 export const Route = createFileRoute("/cookie")({
   head: () => ({
@@ -53,17 +54,29 @@ function CookiePage() {
               Sono necessari al funzionamento del sito e all'erogazione dei servizi richiesti dall'utente. Ai sensi dell'art. 122 del Codice Privacy non richiedono il consenso preventivo, ma solo un'adeguata informativa.
             </p>
             <p className="mt-3">
-              Su questo sito rientrano in questa categoria esclusivamente gli strumenti di prima parte che memorizzano la scelta espressa sul banner e che impediscono il doppio conteggio di una richiesta inviata, elencati al punto 3.
+              Su questo sito rientrano in questa categoria esclusivamente gli strumenti di prima parte
+              {CONSENSO_RICHIESTO ? " che memorizzano la scelta espressa sul banner e" : ""} che impediscono il doppio conteggio di una richiesta inviata, elencati al punto 3.
             </p>
 
             <h3 className="mt-8 text-lg font-semibold text-ink">2.2 Cookie analitici</h3>
             {GA4_ID ? (
               <>
                 <p className="mt-3">
-                  Servono a raccogliere informazioni sul modo in cui il sito viene utilizzato. Essendo forniti da un soggetto terzo (Google Analytics 4), non sono equiparabili ai cookie tecnici e <strong className="text-ink">richiedono il consenso preventivo</strong>, che può essere negato o revocato senza alcuna conseguenza sulla fruizione del sito.
+                  Servono a raccogliere informazioni sul modo in cui il sito viene utilizzato. Essendo forniti da un soggetto terzo (Google Analytics 4), non sono equiparabili ai cookie tecnici.
+                  {CONSENSO_RICHIESTO ? (
+                    <>
+                      {" "}
+                      <strong className="text-ink">Richiedono il consenso preventivo</strong>, che può essere negato o revocato senza alcuna conseguenza sulla fruizione del sito.
+                    </>
+                  ) : (
+                    <>
+                      {" "}
+                      <strong className="text-ink">Su questo sito sono attivi dalla prima visita, senza richiesta preventiva di consenso.</strong> Al punto 5 sono indicati gli strumenti con cui l'utente può impedirne il funzionamento dal proprio browser.
+                    </>
+                  )}
                 </p>
                 <p className="mt-3">
-                  Oltre alle pagine visitate, con il consenso vengono registrati alcuni eventi di interazione, sempre in forma aggregata e mai riconducibili a un singolo visitatore identificato: quanto si scorre una pagina e quanto a lungo vi si resta con la finestra in primo piano, quali pulsanti e collegamenti vengono premuti, quali domande frequenti vengono aperte, l'avvio e la pausa del video di presentazione, le regolazioni del calcolatore dei costi e l'avanzamento fra le domande del check-up, compresi i punti in cui la compilazione si interrompe.
+                  Oltre alle pagine visitate vengono registrati alcuni eventi di interazione, sempre in forma aggregata e mai riconducibili a un singolo visitatore identificato: quanto si scorre una pagina e quanto a lungo vi si resta con la finestra in primo piano, quali pulsanti e collegamenti vengono premuti, quali domande frequenti vengono aperte, l'avvio e la pausa del video di presentazione, le regolazioni del calcolatore dei costi, l'avanzamento fra le domande del check-up — compresi i punti in cui la compilazione si interrompe — e l'invio andato a buon fine della richiesta di check-up.
                 </p>
                 <p className="mt-3">
                   La finalità è esclusivamente diagnostica: capire quali contenuti non funzionano e dove il questionario risulta troppo lungo. <strong className="text-ink">Questi dati non vengono usati per profilare l'utente né per inviargli pubblicità</strong>; il trattamento a fini pubblicitari è quello descritto al punto 2.3, per il quale il consenso è distinto.
@@ -80,7 +93,16 @@ function CookiePage() {
               Servono a creare profili relativi all'utente e a inviare messaggi pubblicitari in linea con le preferenze manifestate durante la navigazione, oltre che a misurare l'efficacia delle campagne. Richiedono sempre il consenso libero, specifico, informato e inequivocabile dell'utente, che può essere revocato in qualsiasi momento.
             </p>
             <p className="mt-3">
-              Su questo sito rientra in questa categoria <strong className="text-ink">il solo tag di Google Ads</strong>, utilizzato per misurare quali annunci pubblicitari conducono a una richiesta di check-up. <strong className="text-ink">Il tag non viene caricato finché l'utente non presta il proprio consenso</strong> tramite il banner.
+              Su questo sito rientra in questa categoria <strong className="text-ink">il solo tag di Google Ads</strong>, utilizzato per misurare quali annunci pubblicitari conducono a una richiesta di check-up.{" "}
+              {CONSENSO_RICHIESTO ? (
+                <>
+                  <strong className="text-ink">Il tag non viene caricato finché l'utente non presta il proprio consenso</strong> tramite il banner.
+                </>
+              ) : (
+                <>
+                  <strong className="text-ink">Il tag viene caricato dalla prima visita, senza richiesta preventiva di consenso.</strong> Al punto 5 sono indicati gli strumenti con cui l'utente può impedirne il funzionamento e disattivare la personalizzazione degli annunci Google.
+                </>
+              )}
             </p>
           </Section>
 
@@ -99,19 +121,22 @@ function CookiePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-hairline">
-                    <td className="py-3 pr-4 align-top font-mono text-xs">hr0.cookie-consent</td>
-                    <td className="py-3 pr-4 align-top">localStorage, prima parte</td>
-                    <td className="py-3 pr-4 align-top">
-                      Memorizza la scelta espressa sul banner, per non riproporla a ogni pagina e per conservare la prova del consenso
-                    </td>
-                    <td className="py-3 pr-4 align-top">6 mesi</td>
-                  </tr>
+                  {CONSENSO_RICHIESTO ? (
+                    <tr className="border-b border-hairline">
+                      <td className="py-3 pr-4 align-top font-mono text-xs">hr0.cookie-consent</td>
+                      <td className="py-3 pr-4 align-top">localStorage, prima parte</td>
+                      <td className="py-3 pr-4 align-top">
+                        Memorizza la scelta espressa sul banner, per non riproporla a ogni pagina e per conservare la prova del consenso
+                      </td>
+                      <td className="py-3 pr-4 align-top">6 mesi</td>
+                    </tr>
+                  ) : null}
                   <tr className="border-b border-hairline">
                     <td className="py-3 pr-4 align-top font-mono text-xs">google-ads-conversion-sent</td>
                     <td className="py-3 pr-4 align-top">sessionStorage, prima parte</td>
                     <td className="py-3 pr-4 align-top">
-                      Impedisce che il ricaricamento della pagina di conferma invii due volte la stessa conversione. Presente solo se è stato prestato il consenso al marketing
+                      Impedisce che il ricaricamento della pagina di conferma invii due volte la stessa conversione
+                      {CONSENSO_RICHIESTO ? ". Presente solo se è stato prestato il consenso al marketing" : ""}
                     </td>
                     <td className="py-3 pr-4 align-top">Sessione</td>
                   </tr>
@@ -122,7 +147,7 @@ function CookiePage() {
             {GA4_ID ? (
               <>
                 <h3 className="mt-8 text-base font-semibold text-ink">
-                  Cookie analitici di terza parte — previo consenso
+                  Cookie analitici di terza parte — {CONSENSO_RICHIESTO ? "previo consenso" : "attivi dalla prima visita"}
                 </h3>
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full min-w-[640px] border-collapse text-sm">
@@ -158,10 +183,10 @@ function CookiePage() {
             ) : null}
 
             <h3 className="mt-8 text-base font-semibold text-ink">
-              Cookie di profilazione di terza parte — previo consenso
+              Cookie di profilazione di terza parte — {CONSENSO_RICHIESTO ? "previo consenso" : "attivi dalla prima visita"}
             </h3>
             <p className="mt-3">
-              I cookie seguenti vengono installati da Google Ireland Ltd. (Gordon House, Barrow Street, Dublino 4, Irlanda) esclusivamente dopo il consenso prestato sul banner. Le denominazioni e le durate sono quelle dichiarate da Google e possono variare nel tempo per decisione del fornitore: l'elenco aggiornato è consultabile nell'{" "}
+              I cookie seguenti vengono installati da Google Ireland Ltd. (Gordon House, Barrow Street, Dublino 4, Irlanda){CONSENSO_RICHIESTO ? " esclusivamente dopo il consenso prestato sul banner" : " dalla prima visita al sito"}. Le denominazioni e le durate sono quelle dichiarate da Google e possono variare nel tempo per decisione del fornitore: l'elenco aggiornato è consultabile nell'{" "}
               <a
                 href="https://business.safety.google/adscookies/"
                 target="_blank"
@@ -289,30 +314,56 @@ function CookiePage() {
             </p>
           </Section>
 
-          <Section title="5. Come gestire o revocare il consenso">
-            <h3 className="text-lg font-semibold text-ink">Tramite il banner del sito</h3>
-            <p className="mt-3">
-              Al primo accesso viene mostrato un banner che consente di accettare tutti i cookie, rifiutarli tutti o scegliere per singola categoria. Nessuna opzione è preselezionata e il banner non può essere chiuso senza esprimere una scelta: la semplice prosecuzione della navigazione non comporta alcun consenso. Fino a quel momento non viene installato alcuno strumento di profilazione.
-            </p>
-            <p className="mt-3">
-              È possibile modificare o revocare in qualsiasi momento le preferenze espresse tramite il link <strong className="text-ink">"Preferenze cookie"</strong> presente nel footer del sito, oppure con il pulsante qui sotto. La revoca non pregiudica la liceità del trattamento effettuato prima della revoca stessa.
-            </p>
+          <Section title={CONSENSO_RICHIESTO ? "5. Come gestire o revocare il consenso" : "5. Come disattivare il tracciamento"}>
+            {CONSENSO_RICHIESTO ? (
+              <>
+                <h3 className="text-lg font-semibold text-ink">Tramite il banner del sito</h3>
+                <p className="mt-3">
+                  Al primo accesso viene mostrato un banner che consente di accettare tutti i cookie, rifiutarli tutti o scegliere per singola categoria. Nessuna opzione è preselezionata e il banner non può essere chiuso senza esprimere una scelta: la semplice prosecuzione della navigazione non comporta alcun consenso. Fino a quel momento non viene installato alcuno strumento di profilazione.
+                </p>
+                <p className="mt-3">
+                  È possibile modificare o revocare in qualsiasi momento le preferenze espresse tramite il link <strong className="text-ink">"Preferenze cookie"</strong> presente nel footer del sito, oppure con il pulsante qui sotto. La revoca non pregiudica la liceità del trattamento effettuato prima della revoca stessa.
+                </p>
 
-            {GOOGLE_ADS_ID || GA4_ID ? (
-              <div className="mt-5">
-                <button
-                  type="button"
-                  onClick={openConsentPreferences}
-                  className="inline-flex cursor-pointer items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
-                >
-                  Gestisci le preferenze sui cookie
-                </button>
-              </div>
-            ) : null}
+                {GOOGLE_ADS_ID || GA4_ID ? (
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={openConsentPreferences}
+                      className="inline-flex cursor-pointer items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+                    >
+                      Gestisci le preferenze sui cookie
+                    </button>
+                  </div>
+                ) : null}
 
-            <p className="mt-5">
-              La scelta espressa viene conservata per sei mesi, decorsi i quali il banner viene nuovamente proposto. Il banner ricompare inoltre in caso di modifica degli strumenti di tracciamento utilizzati, poiché un consenso prestato su un'informativa diversa da quella vigente non può considerarsi informato.
-            </p>
+                <p className="mt-5">
+                  La scelta espressa viene conservata per sei mesi, decorsi i quali il banner viene nuovamente proposto. Il banner ricompare inoltre in caso di modifica degli strumenti di tracciamento utilizzati, poiché un consenso prestato su un'informativa diversa da quella vigente non può considerarsi informato.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-ink">Tramite gli strumenti di Google</h3>
+                <p className="mt-3">
+                  Gli strumenti descritti ai punti 2.2 e 2.3 sono attivi dalla prima visita e il sito non mostra un banner di raccolta del consenso. L'utente può comunque impedirne il funzionamento in ogni momento, con effetto su questo sito e su tutti gli altri che utilizzano gli stessi strumenti:
+                </p>
+                <ul className="mt-3 list-disc space-y-2 pl-5">
+                  <li>
+                    <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noreferrer" className="text-brand underline">Componente aggiuntivo per la disattivazione di Google Analytics</a> — impedisce a Google Analytics di raccogliere dati dalle pagine visitate.
+                  </li>
+                  <li>
+                    <a href="https://myadcenter.google.com/" target="_blank" rel="noreferrer" className="text-brand underline">Centro annunci di Google</a> — consente di disattivare la personalizzazione degli annunci sul proprio account Google.
+                  </li>
+                  <li>
+                    <a href="https://www.youronlinechoices.com/it/le-tue-scelte" target="_blank" rel="noreferrer" className="text-brand underline">Your Online Choices</a> — gestione centralizzata delle preferenze pubblicitarie dei principali operatori.
+                  </li>
+                </ul>
+                <p className="mt-3">
+                  È inoltre possibile opporsi al trattamento e chiederne la cancellazione scrivendo a{" "}
+                  <a href="mailto:info@hr0.it" className="text-brand underline">info@hr0.it</a>, secondo quanto indicato al punto 6.
+                </p>
+              </>
+            )}
 
             <h3 className="mt-8 text-lg font-semibold text-ink">Tramite le impostazioni del browser</h3>
             <p className="mt-3">

@@ -1,3 +1,5 @@
+import { CONSENSO_RICHIESTO } from "./site";
+
 /**
  * Stato del consenso ai cookie.
  *
@@ -115,6 +117,9 @@ function readStored(): ConsentDecision | null {
  * primo render è sempre "nessuna decisione", e l'idratazione la corregge.
  */
 export function hydrateConsent() {
+  // Senza banner non c'è niente da rileggere: la scelta non è mai stata
+  // chiesta, e lo stato resta quello iniziale.
+  if (!CONSENSO_RICHIESTO) return;
   if (hydrated || typeof window === "undefined") return;
   hydrated = true;
   const decision = readStored();
@@ -130,6 +135,25 @@ export function subscribeConsent(listener: () => void) {
 
 export function getConsentSnapshot(): State {
   return state;
+}
+
+/**
+ * Se il tag di Google Ads può partire.
+ *
+ * Il permesso si chiede a questa funzione invece di leggere `decision` da
+ * fuori: con `CONSENSO_RICHIESTO` a `false` non esiste nessuna decisione
+ * memorizzata — non è stata chiesta a nessuno — e un controllo scritto a mano
+ * nel chiamante leggerebbe `null` e spegnerebbe il tracciamento proprio nel
+ * caso in cui deve restare acceso. Tenendo la regola in un posto solo,
+ * l'interruttore vale ovunque per costruzione.
+ */
+export function marketingConsentito(): boolean {
+  return !CONSENSO_RICHIESTO || !!state.decision?.marketing;
+}
+
+/** Se GA4 può partire. Stessa regola di `marketingConsentito`. */
+export function analyticsConsentito(): boolean {
+  return !CONSENSO_RICHIESTO || !!state.decision?.analytics;
 }
 
 /**
@@ -162,6 +186,7 @@ export function saveConsent(choice: ConsentChoice) {
 
 /** Riapre il pannello a chi ha già scelto (link "Preferenze cookie"). */
 export function openConsentPreferences() {
+  if (!CONSENSO_RICHIESTO) return;
   if (state.reopened) return;
   setState({ ...state, reopened: true });
 }
