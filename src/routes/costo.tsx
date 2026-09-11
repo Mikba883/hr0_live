@@ -92,21 +92,23 @@ function CostoPage() {
         />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[1.15fr_0.85fr] md:gap-14">
           <div className="text-center md:text-left">
-            <Eyebrow>Per titolari e amministratori di PMI</Eyebrow>
-            <h1 className="text-[40px] leading-[1.05] sm:text-[56px] md:text-[62px] text-ink">
-              Un'assunzione sbagliata ti costa fino a{" "}
-              <span className="text-danger">18.000€</span>.
+            <Eyebrow>Consulenza HR per PMI</Eyebrow>
+            <h1 className="text-[34px] leading-[1.08] sm:text-[46px] md:text-[52px] text-ink">
+              La persona giusta non si trova per caso.
+              <br />
+              <span className="text-brand">Si sceglie con il metodo giusto.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-xl text-lg text-ink-soft sm:text-xl md:mx-0">
-              Ruoli scoperti, persone che se ne vanno, il tuo tempo bruciato tra
-              CV e colloqui. In 30 minuti calcoliamo insieme il tuo costo
-              nascosto.
+              Se un'assunzione non funziona, il problema spesso nasce molto prima del colloquio:
+              ruolo, ricerca, valutazione e processo decisionale.
+            </p>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft sm:text-xl md:mx-0">
+              Ti aiutiamo a capire dove il tuo processo di selezione sta creando costi e
+              inefficienze e come correggerlo.
             </p>
             <div className="mt-8 flex max-w-md flex-col items-center gap-3 md:items-start">
-              <CtaButton href="/check-up">Prenota il check-up gratuito</CtaButton>
-              <p className="text-sm text-ink-soft">
-                30 min · Nessun impegno · Numeri tuoi da tenere
-              </p>
+              <CtaButton href="/check-up">Prenota il check-up HR gratuito</CtaButton>
+              <p className="text-sm text-ink-soft">30 min · Analisi concreta · Nessun impegno</p>
             </div>
             <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 md:justify-start">
               {[

@@ -9,11 +9,6 @@ const eur = (n: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(n));
 
-function clamp(v: number, min: number, max: number) {
-  if (Number.isNaN(v)) return min;
-  return Math.min(max, Math.max(min, v));
-}
-
 function Field({
   label,
   value,
@@ -21,7 +16,6 @@ function Field({
   max,
   step = 1,
   format,
-  suffix,
   onChange,
 }: {
   label: string;
@@ -30,7 +24,6 @@ function Field({
   max: number;
   step?: number;
   format: (v: number) => string;
-  suffix?: string;
   onChange: (v: number) => void;
 }) {
   return (
@@ -41,32 +34,16 @@ function Field({
           {format(value)}
         </span>
       </div>
-      <div className="flex items-center gap-3">
-        <input
-          type="range"
-          aria-label={label}
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="h-6 w-full accent-[color:var(--color-brand)]"
-        />
-        <div className="flex shrink-0 items-center gap-1 rounded-xl border border-hairline bg-white px-2 py-1">
-          <input
-            type="number"
-            inputMode="numeric"
-            aria-label={`${label} (valore esatto)`}
-            min={min}
-            max={max}
-            step={step}
-            value={value}
-            onChange={(e) => onChange(clamp(Number(e.target.value), min, max))}
-            className="w-16 bg-transparent text-right text-sm font-semibold text-ink outline-none"
-          />
-          {suffix && <span className="text-xs text-ink-soft">{suffix}</span>}
-        </div>
-      </div>
+      <input
+        type="range"
+        aria-label={label}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="h-6 w-full accent-[color:var(--color-brand)]"
+      />
     </div>
   );
 }
@@ -182,7 +159,6 @@ export function CostCalculator() {
             min={25000}
             max={80000}
             step={1000}
-            suffix="€"
             format={eur}
             onChange={regola("ral", setRal)}
           />
@@ -191,7 +167,6 @@ export function CostCalculator() {
             value={mesi}
             min={1}
             max={12}
-            suffix="mesi"
             format={(v) => `${v} ${v === 1 ? "mese" : "mesi"}`}
             onChange={regola("mesi", setMesi)}
           />
@@ -208,7 +183,6 @@ export function CostCalculator() {
             value={giorni}
             min={0}
             max={6}
-            suffix="gg"
             format={(v) => `${v} ${v === 1 ? "giorno" : "giorni"}`}
             onChange={regola("giorni", setGiorni)}
           />
